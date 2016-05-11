@@ -15,7 +15,7 @@ K = 3
 ############ EXTRAER KMERS ##################
 print "############ EXTRAER KMERS ##################"
 # OpenCL things
-codigo_kernel = open("getKR.cl").read()
+codigo_kernel = open("kernels/getKR.cl").read()
 contexto = cl.create_some_context()
 cola = cl.CommandQueue(contexto)
 programa = cl.Program(contexto, codigo_kernel).build()

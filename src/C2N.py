@@ -14,7 +14,7 @@ print "#############  KMERS  A BASE 4 #################"
 # OpenCL Things
 contexto = cl.create_some_context()
 cola = cl.CommandQueue(contexto)
-codigo_kernel = open("c2n.cl").read()
+codigo_kernel = open("kernels/c2n.cl").read()
 programa = cl.Program(contexto, codigo_kernel).build()
 C2N = programa.C2N
 C2N.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32])
