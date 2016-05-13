@@ -1,12 +1,12 @@
 /*
-Este kernel transforma un conjunto de kmers a su represetaci'on en entero de 64btis. Los par'ametros son:
-SK  = Matriz de kmers de entrada
-SK_4 = Matriz donde se almacena la salida. 8 bits por elemento
+BASE 4 A CARACTERES
+SK  = Matriz de kmers de salida
+SK_4 = Matriz de kmers, entrada, base 4.
 k = Tamano del kmers
 s = Numero de kmers en el conjunto
 */
-__kernel void C2N(
-   __global char* SK,
+__kernel void N2C(
+   __global uchar* SK,
    __global uchar* SK_4, // 8 bits
    const unsigned int k,
    const unsigned int s)
@@ -16,19 +16,19 @@ __kernel void C2N(
    // Valido para que no exista un overflow
 
    if((i <= k-1)&& (j<=s-1))  {
-     switch (SK[(j*k)+i]) {
+     switch (SK_4[(j*k)+i]) {
        // Evaluo codigo ascii
-       case 65:
-        SK_4[(j*k)+i] = 0;
+       case 0:
+        SK[(j*k)+i] = 65;
         break;
-       case 67:
-         SK_4[(j*k)+i] = 1;
+       case 1:
+         SK[(j*k)+i] = 67;
          break;
-       case 71:
-         SK_4[(j*k)+i] = 2;
+       case 2:
+         SK[(j*k)+i] = 71;
          break;
-       case 84:
-         SK_4[(j*k)+i] = 3;
+       case 3:
+         SK[(j*k)+i] = 84;
          break;
         default:
          SK_4[(j*k)+i] = (j*k)+i;
