@@ -10,7 +10,7 @@ __kernel void N2B8(
    int j = get_global_id(1);
    if((i <= c_sk_4-1)&& (j<=s-1))  {
 
-   SL_SK_4[(j*c_sk_4)+i] = SK_4[(j*c_sk_4)+i] << (6 - (i % (4*2)));
+   SL_SK_4[(j*c_sk_4)+i] = SK_4[(j*c_sk_4)+i] << (6 - (i % 4)*2);
     }
     if ((i<(c_sk_4/4)) && (j<=s-1)) {
       SK_2_8[(j*c_sk_4/4)+i] = SL_SK_4[(j*c_sk_4)+(i*4)] | SL_SK_4[(j*c_sk_4)+(i*4)+1] | SL_SK_4[(j*c_sk_4)+(i*4)+2] |  SL_SK_4[(j*c_sk_4)+(i*4)+3];
