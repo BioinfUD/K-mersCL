@@ -11,11 +11,13 @@ K-mersCL se conforma por un conjunto de kernels OpenCL organizados en dos grupos
 Kernels para operaciones básicas
 --------------------------------
 
-* Obtención de los k-mers de una lectura
-* Conversión de K-mers: Caracteres a sistema numérico base 4
-* Conversión de K-mers: Sistema numérico base 4 a caracteres
-* Conversión de K-mers: Sistema numérico base 4 al decimal
-* Conversión de K-mers: Sistema numérico decimal a base 4
+* Obtención de los k-mers de una lectura (getKmers.py)
+* Conversión de K-mers: Caracteres a sistema numérico base 4 (C2N.py)
+* Conversión de K-mers: Sistema numérico base 4 a caracteres  (N2C.py)
+* Conversión de K-mers: Sistema numérico base 4 al decimal (usando  enteros de 8 bits) (N2B8.py) y viceversa (B82N.py)
+* Conversión de K-mers: Sistema numérico decimal (usando  enteros de 8 bits) a numerico decimal (enteros de 16 bits) (B82B16.py) y viceversa (B162B8.py)
+* Conversión de K-mers: Sistema numérico decimal (usando  enteros de 8 bits) a numerico decimal (enteros de 32 bits) (B82B32.py) y viceversa (B322B8.py)
+* Conversión de K-mers: Sistema numérico decimal (usando  enteros de 8 bits) a numerico decimal (enteros de 64 bits) (B82B64.py) y viceversa (B642B8.py)
 * Inverso de K-mers
 * Complemento de K-mers
 * Complemento inverso de K-mers

@@ -21,11 +21,11 @@ else:
 
 S = h_SK_4.shape[0] # Numeero de kmes
 K = h_SK_4.shape[1] # Tamano del kmer
-print "#############  KMERS BASE 4 A BASE 10 (8bits) #################"
+print "#############  KMERS BASE 4 A BASE 2 (8bits) #################"
 # OpenCL Things
 contexto = cl.create_some_context()
 cola = cl.CommandQueue(contexto)
-codigo_kernel = open("kernels/sk_2_8.cl").read()
+codigo_kernel = open("kernels/N2B8.cl").read()
 programa = cl.Program(contexto, codigo_kernel).build()
 N2B8 = programa.N2B8
 N2B8.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32])
@@ -44,5 +44,5 @@ N2B8(cola, rango_global, None, d_SK_4, d_SL_SK_4, d_SK_2_8, K, S)
 cola.finish()
 # Traigo datos
 cl.enqueue_copy(cola, h_SK_2_8, d_SK_2_8)
-print h_SL_SK_4
+print h_SK_4
 print h_SK_2_8
