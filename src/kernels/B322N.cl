@@ -1,8 +1,7 @@
-// Kernel obtiene base 4 a partir de kmers en representacion de 8 bit 
-
-__kernel void B82N(
+// Kernel obtiene base 4 a partir de kmers en representacion de 32 bit 
+__kernel void B322N(
    __global uchar* SK_4, // Matriz con kmers de salida (base 4)
-   __global uchar* SK_2_8, // Matriz representaci'on compacta (4 kmers por byte), entrada.
+   __global uint* SK_2_32, // Matriz representaci'on compacta (16 kmers por 4 byte), entrada.
    const unsigned int c_sk_4, // Numero de columnas de SK
    const unsigned int s)
 {
@@ -13,7 +12,7 @@ __kernel void B82N(
 
    if((i <= c_sk_4-1)&& (j<=s-1) )  {
      //uchar mask = 192 >> ((i%4)*2); // 192 1100000 corrido
-     SK_4[(j*c_sk_4)+i]  = (SK_2_8[(j*(c_sk_4/4))+(i/4)]>>(6-((i%4)*2))) & 3;
+     SK_4[(j*c_sk_4)+i]  = (SK_2_32[(j*(c_sk_4/16))+(i/16)]>>(30-((i%16)*2))) & 3;
 
     }
 

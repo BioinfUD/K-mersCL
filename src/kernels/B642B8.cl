@@ -1,5 +1,5 @@
 __kernel void B642B8(
-   __global long* SK_2_64, // Matriz con kmers de salida (base 4)
+   __global ulong* SK_2_64, // Matriz con kmers de salida (base 4)
    __global uchar* SK_2_8, // Matriz representaci'on compacta (4 kmers por byte), entrada.
    const unsigned int c_sk_2_64, // Numero de columnas de SK_2_16
    const unsigned int c_sk_2_8, // Numero de columnas de SK_2_16
