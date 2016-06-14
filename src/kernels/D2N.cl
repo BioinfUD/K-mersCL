@@ -1,8 +1,8 @@
 // Kernel obtiene base 4 a partir de kmers en representacion de 64 bit
 
-__kernel void B642N(
+__kernel void D2N(
    __global uchar* SK_4, // Matriz con kmers de salida (base 4)
-   __global ulong* SK_2_64, // Matriz representaci'on compacta (32 bases por 8 bytes), entrada.
+   __global ulong* SK_10, // Matriz representaci'on compacta (32 bases por 8 bytes), entrada.
    const unsigned int cSK_4, // Numero de columnas de SK
    const unsigned int s)
 {
@@ -12,7 +12,7 @@ __kernel void B642N(
 
     // Splitting
    if((i <= cSK_4-1)&& (j<=s-1) )  {
-     SK_4[(j*cSK_4)+i]  = (SK_2_64[(j*(cSK_4/32))+(i/32)]>>(62-((i%32)*2))) & 3;
+     SK_4[(j*cSK_4)+i]  = (SK_10[(j*(cSK_4/32))+(i/32)]>>(62-((i%32)*2))) & 3;
 
     }
 

@@ -6,11 +6,10 @@ import scipy
 # BASE 10 A BASE 4
 
 # Matriz de entrada
-#K_2_8 = [[255,255,1,1,1,1,1,1,1,2]]
+#SK_2_8 = [[255,255,1,1,1,1,1,1]]
 
 #SK_2_8 = [[254,255],[254,255]]
-#SK_2_8 = [[255,255],[2,2],[3,3],[4,4], [4,4]]
-SK_2_8 = [[1,3,1,1,255,255],[1,3,2,1,2,2],[1,3,3,1,3,3],[1,3,2,1,4,4], [1,3,2,1,4,4]]
+SK_2_8 = [[3,1,1,1,0,0,2,2, 255,255],[3,1,0,0,2,2,1,2,2,2],[3,1,1,2,2,2,7,7,3,3],[3,1,6,7,4,4,6,7,4,4], [3,3,6,7,4,4,1,1,4,4]]
 
 h_SK_2_8 =np.ndarray((len(SK_2_8), len(SK_2_8[0]))).astype(np.uint8)
 h_SK_2_8[:] = SK_2_8
@@ -20,51 +19,51 @@ rSK_2_8 = h_SK_2_8.shape[0]
 
 rTMP = rSK_2_8
 
-if (cSK_2_8%2)==0:
+if (cSK_2_8%8)==0:
     cTMP = cSK_2_8
 else:
-    cTMP = cSK_2_8  + 1
+    cTMP = (8  - cSK_2_8%8)  + cSK_2_8
 
 
 # Matriz de salida
-h_SK_2_16= np.ndarray((rTMP, cTMP/2)).astype(np.uint16)
+h_SK_2_64= np.ndarray((rTMP, cTMP/8)).astype(np.uint64)
 
 
-print "#############  KMERS BASE 2 (8BITS) A BASE 2 (16 BITS)  #################"
+print "#############  KMERS BASE 2 (8BITS) A BASE 2 (64 BITS)  #################"
 # OpenCL Things
 contexto = cl.create_some_context()
 cola = cl.CommandQueue(contexto)
-codigo_kernel = open("kernels/B82B16.cl").read()
+codigo_kernel = open("kernels/B82B64.cl").read()
 programa = cl.Program(contexto, codigo_kernel).build()
-B82B16 = programa.B82B16
-B82B16.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32, np.uint32])
+B82B64 = programa.B82B64
+B82B64.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32, np.uint32])
 
 #Copio datos de entrada a dispositivo
 d_SK_2_8 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_2_8)
 
 #Matriz temporal , tamano de h_SK_2_8 x 2 dado que va a ser de 16 bits por elemento
-size_TMP = (16 * rTMP * cTMP) / 8
+size_TMP = (64 * rTMP * cTMP) / 8
 d_TMP = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, size_TMP)
 
 #Bufer para la salida
-d_SK_2_16 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_2_16.nbytes)
+d_SK_2_64 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_2_64.nbytes)
 
 # Dimensiones de ejecucion
 rango_global = (cTMP, rTMP)
 
-cSK_2_16 = h_SK_2_16.shape[1]
+cSK_2_64 = h_SK_2_64.shape[1]
 # Ejecucion del kernel
-B82B16(cola, rango_global, None, d_SK_2_8, d_TMP, d_SK_2_16, cSK_2_8, cTMP, rTMP)
-#B82B16(cola, (10,10), None, d_SK_2_8, d_SK_2_16, cSK_2_8, cSK_2_16, s)
+B82B64(cola, rango_global, None, d_SK_2_8, d_TMP, d_SK_2_64, cSK_2_8, cTMP, rTMP)
+#B82B64(cola, (10,10), None, d_SK_2_8, d_SK_2_64, cSK_2_8, c_sk_2_64, s)
 
 cola.finish()
 # Traigo datos
-cl.enqueue_copy(cola, h_SK_2_16, d_SK_2_16)
-h_TMP = np.ndarray((rTMP, cTMP)).astype(np.uint16)
+cl.enqueue_copy(cola, h_SK_2_64, d_SK_2_64)
+h_TMP = np.ndarray((rTMP, cTMP)).astype(np.uint64)
 cl.enqueue_copy(cola, h_TMP, d_TMP)
 
 print "h_TMP"
 print "cTMP : " + str(cTMP) + " cSK_2_8: " + str(cSK_2_8)
 print h_TMP
 print h_SK_2_8
-print h_SK_2_16
+print h_SK_2_64

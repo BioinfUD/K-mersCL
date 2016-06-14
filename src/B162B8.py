@@ -16,8 +16,8 @@ h_SK_2_16[:] = SK_2_16
 h_SK_2_8 =np.ndarray((len(SK_2_16), len(SK_2_16[0])*2)).astype(np.uint8)
 
 print h_SK_2_8
-c_sk_2_16 = h_SK_2_16.shape[1]
-c_sk_2_8 = h_SK_2_8.shape[1]
+cSK_2_16 = h_SK_2_16.shape[1]
+cSK_2_8 = h_SK_2_8.shape[1]
 s = h_SK_2_16.shape[0] # Numero de kmes
 
 
@@ -40,7 +40,7 @@ d_SK_2_8 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_2_8.nbytes)
 rango_global = (h_SK_2_8.shape[1], s)
 
 # Ejecucion del kernel
-B162B8(cola, rango_global, None, d_SK_2_16, d_SK_2_8, c_sk_2_16, c_sk_2_8, s)
+B162B8(cola, rango_global, None, d_SK_2_16, d_SK_2_8, cSK_2_16, cSK_2_8, s)
 
 cola.finish()
 # Traigo datos

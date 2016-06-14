@@ -1,7 +1,7 @@
-__kernel void B82B16(
+__kernel void B82B64(
    __global uchar* SK_2_8, // 8 bits (1 kmer por posicion) entrada // # DE COLUMNAS, DEBE SER MULTIPLO DE 4. SI K NO ES MULTIPLO DE 4, SE DEBE AGREGAR LAS COLUMNAS INICIALES IZQUIERDA= CON 0
-   __global ushort* TMP, // Matriz intermedia donde se guardan corrimientos
-   __global ushort* SK_2_16, // 16 bits (8 kmers) salida, n cols = cSK_4 / 4
+   __global ulong* TMP, // Matriz intermedia donde se guardan corrimientos
+   __global ulong* SK_2_64, // 16 bits (8 kmers) salida, n cols = cSK_4 / 4
    const unsigned int cSK_8, // Numero de columnas de SK_4
    const unsigned int cTMP, // Numero de columnas de SK_4
    const unsigned int s)
@@ -20,21 +20,20 @@ __kernel void B82B16(
    }
 
    // Left Shift
-
    if((i <= cTMP-1) && (i>=(cTMP-cSK_8)) && (j<=s-1))  {
-     TMP[(j*cTMP)+i] = TMP[(j*cTMP)+i] << (16 - 8*((i%2)+1));
+     TMP[(j*cTMP)+i] = (ulong) TMP[(j*cTMP)+i] << (64 - 8*((i%8)+1));
     }
 
     // Fussion
     // N iteraciones for: 1, log_2(n/m), 8n es destino, 8m
-    for(int c=2; c>=2; c/=2) {
+    for(int c=8; c>=2; c/=2) {
       if((i<=(cTMP-1)) && (j<=s-1)) {
-        TMP[(j*cTMP)+i] =  TMP[(j*cTMP)+i*2] | TMP[(j*cTMP)+i*2+1];
+        TMP[(j*cTMP)+i] = (ulong)  TMP[(j*cTMP)+i*2] | TMP[(j*cTMP)+i*2+1];
       }
     }
 
 
-    if((i <=((cTMP/2))-1)&& (j<=s-1))  {
-      SK_2_16[(j*cTMP/2)+i] = TMP[(j*cTMP)+i];
-    } 
+    if((i <=((cTMP/8))-1)&& (j<=s-1))  {
+      SK_2_64[(j*cTMP/8)+i] =  (ulong) TMP[(j*cTMP)+i];
+    }
   }

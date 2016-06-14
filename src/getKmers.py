@@ -4,13 +4,26 @@
 import pyopencl as cl
 import numpy as np
 from time import time
+import pickle
+import sys
 
-#Memoria para lectura en host
-R = "TCAGCTACGTCAGCTACAGTCA"
-R_h = np.chararray((len(R)))
-R_h [:] = list(R)
-L = len(R_h)
-K = 3
+
+def full_string(file_name, L):
+
+    return full_strig
+
+if len(sys.argv) =! 4:
+    # Use test data
+    R = "TCAGCTACGTCAGCTACAGTCA"
+    R_h = np.chararray((len(R)))
+    R_h [:] = list(R)
+    L = len(R_h)
+    K = 3
+else:
+    K = int(sys.argv[2])
+    L = int(sys.argv[3])
+    file_name = str(sys.argv[4])
+    R = full_string
 
 ############ EXTRAER KMERS ##################
 print "############ EXTRAER KMERS ##################"

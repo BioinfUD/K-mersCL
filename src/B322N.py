@@ -13,11 +13,11 @@ h_SK_2_32[:] = SK_2_32
 #Parametros
 k = 9
 
-c_sk_4 = h_SK_2_32.shape[1]*16 # Ncols matriz salida
+cSK_4 = h_SK_2_32.shape[1]*16 # Ncols matriz salida
 S = h_SK_2_32.shape[0] # Numero de kmes
 
 # Matriz de salida
-h_SK_4 = np.ndarray((S, c_sk_4)).astype(np.uint8)
+h_SK_4 = np.ndarray((S, cSK_4)).astype(np.uint8)
 
 
 print "#############  KMERS BASE 2 (32 bits - 16 bases) A BASE 4 (8bits por base) #################"
@@ -36,14 +36,14 @@ d_SK_2_32 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_
 d_SK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_4.nbytes)
 
 # Dimensiones de ejecucion
-rango_global = (c_sk_4, S)
+rango_global = (cSK_4, S)
 # Ejecucion del kernel
-B322N(cola, rango_global, None, d_SK_4, d_SK_2_32, c_sk_4, S)
+B322N(cola, rango_global, None, d_SK_4, d_SK_2_32, cSK_4, S)
 cola.finish()
 # Traigo datos
 cl.enqueue_copy(cola, h_SK_4, d_SK_4)
 # Borro columnas que sobran
-#h_SK_4 = scipy.delete(h_SK_4,range(c_sk_4-k),1)
+#h_SK_4 = scipy.delete(h_SK_4,range(cSK_4-k),1)
 print "Matriz de entrada"
 print h_SK_2_32
 print "Matriz de salida"
