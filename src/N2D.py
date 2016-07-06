@@ -21,14 +21,11 @@ if cSK_4 > 64:
     print "Max supported kmer size 64"
 
 # TODO: Numpy, anadir columnas 0, tener el k de entrada de salida.
-# Si cols de SK_4 no es multiplo de 4
-
 rTMP = h_SK_4.shape[0]
 if (h_SK_4.shape[1]%32)==0:
     cTMP =  cSK_4
 else:
     cTMP = (32 - cSK_4%32) + cSK_4
-
 
 # Output matrix
 h_SK_10=np.ndarray((rTMP, cTMP/32)).astype(np.uint64)
@@ -47,16 +44,16 @@ N2D.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32, np.uint32])
 size_TMP = (64 * rTMP * cTMP) / 8
 d_TMP = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, size_TMP)
 
-#Copio datos de entrada a dispositivo
+# Copy input data from host to device
 d_SK_4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_4)
-#Bufer para la salida
+# Output buffer
 d_SK_10 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_10.nbytes)
-# Dimensiones de ejecucion
+# Execution Range
 rango_global = (cTMP, rTMP)
-# Ejecucion del kernel
+# Kernel Execution
 N2D(cola, rango_global, None, d_SK_4, d_TMP, d_SK_10, cSK_4, cTMP, rTMP)
 cola.finish()
-# Traigo datos
+# Retrieve output
 cl.enqueue_copy(cola, h_SK_10, d_SK_10)
 cola.flush()
 h_TMP = np.ndarray(( rTMP, cTMP)).astype(np.uint64)

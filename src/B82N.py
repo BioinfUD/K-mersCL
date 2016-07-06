@@ -5,18 +5,18 @@ from time import time
 import scipy
 # BASE 10 A BASE 4
 
-# Matriz de entrada
+# Input Matrix
 SK_2_8 = [[3,64,255],[1,1,64],[1,0,220]]
 h_SK_2_8 =np.ndarray((len(SK_2_8), len(SK_2_8[0]))).astype(np.uint8)
 h_SK_2_8[:] = SK_2_8
 
-#Parametros
+# Parameters
 k = 9
 
 cSK_4 = h_SK_2_8.shape[1]*4
-s = h_SK_2_8.shape[0] # Numero de kmes
+s = h_SK_2_8.shape[0] # Total kmers
 
-# Matriz de salida
+# Output matrix
 h_SK_4 = np.ndarray((s, cSK_4)).astype(np.uint8)
 
 
@@ -29,22 +29,22 @@ programa = cl.Program(contexto, codigo_kernel).build()
 B82N = programa.B82N
 B82N.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32])
 
-#Copio datos de entrada a dispositivo
+# Copy input data from host to device
 d_SK_2_8 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_2_8)
 
-#Bufer para la salida
+# Output buffer
 d_SK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_4.nbytes)
 
-# Dimensiones de ejecucion
+# Execution Range
 rango_global = (cSK_4, s)
-# Ejecucion del kernel
+# Kernel Execution
 B82N(cola, rango_global, None, d_SK_4, d_SK_2_8,cSK_4, s)
 cola.finish()
-# Traigo datos
+# Retrieve output
 cl.enqueue_copy(cola, h_SK_4, d_SK_4)
 # Borro columnas que sobran
 h_SK_4 = scipy.delete(h_SK_4,range(cSK_4-k),1)
-print "Matriz de entrada"
+print "Input Matrix"
 print h_SK_2_8
-print "Matriz de salida"
+print "Output matrix"
 print h_SK_4

@@ -6,6 +6,8 @@ k tamano del kmer
 l tamano de la lectura
 */
 
+// TODO: For several reads
+
 __kernel void getKR(
    __global uchar* R,
    __global uchar* KR,

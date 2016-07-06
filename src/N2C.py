@@ -9,7 +9,7 @@ SK_4 = [[0,2, 3,1],[2,3,2,1],[1,2,3,1],[1, 2,3,1],[0,1,2,3]] # Matriz con KMERS
 h_SK_4 = np.ndarray((len(SK_4), len(SK_4[0]))).astype(np.uint8)
 h_SK_4[:] = SK_4
 
-#Matriz de salida
+#Output matrix
 h_SK = np.chararray((len(SK_4), len(SK_4[0]))) # Defino dimensiones de matriz
 
 
@@ -26,13 +26,13 @@ N2C = programa.N2C
 N2C.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32])
 # Vector de salida
 d_SK = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK.nbytes)
-#Copio datos de entrada a dispositivo
+# Copy input data from host to device
 d_SK4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_4)
-# Dimensiones de ejecucion
+# Execution Range
 rango_global = (K, S)
-# Ejecucion del kernel
+# Kernel Execution
 N2C(cola, rango_global, None, d_SK, d_SK4, K, S)
 cola.finish()
-# Traigo datos
+# Retrieve output
 cl.enqueue_copy(cola, h_SK, d_SK)
 print h_SK

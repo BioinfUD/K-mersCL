@@ -1,4 +1,3 @@
-# Este script define una matriz de kmers en base 4 y la transforma a una matriz de kmers en base 10 de 8 bits.
 import pyopencl as cl
 import numpy as np
 from time import time
@@ -8,7 +7,6 @@ SK_4 = [[3,1,0,0,0,3,3,3,3,1,0,0,0,2,3,2,1,1],[3,1,0,0,0,2,3,2,1,1,0,0,0,2,3,2,1
 # SK_4 = [[3,3,3,3],[2,3,2,1],[1,2,3,1],[1,2,3,1],[0,1,2,3]]
 h_SK_4 =np.ndarray((len(SK_4), len(SK_4[0]))).astype(np.uint8)
 h_SK_4[:] = SK_4
-
 
 rSK_4 = h_SK_4.shape[0] # Number of kmers
 cSK_4 = h_SK_4.shape[1] # Kmer size
@@ -21,7 +19,6 @@ if (h_SK_4.shape[1]%16)==0:
     cTMP =  cSK_4
 else:
     cTMP = (16 - cSK_4%16) + cSK_4
-
 
 # Output matrix
 h_SK_2_32=np.ndarray((rTMP, cTMP/16)).astype(np.uint32)
@@ -40,24 +37,22 @@ N2B32.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32, np.uint32])
 size_TMP = (32 * rTMP * cTMP) / 8
 d_TMP = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, size_TMP)
 
-#Copio datos de entrada a dispositivo
+# Copy input data from host to device
 d_SK_4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_4)
-#Bufer para la salida
+# Output buffer
 d_SK_2_32 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_2_32.nbytes)
-# Dimensiones de ejecucion
+# Execution Range
 rango_global = (cTMP, rTMP)
-# Ejecucion del kernel
+# Kernel Execution
 N2B32(cola, rango_global, None, d_SK_4, d_TMP, d_SK_2_32, cSK_4, cTMP, rTMP)
 cola.finish()
-# Traigo datos
+# Retrieve output
 cl.enqueue_copy(cola, h_SK_2_32, d_SK_2_32)
 cola.flush()
 h_TMP = np.ndarray(( rTMP, cTMP)).astype(np.uint32)
 cl.enqueue_copy(cola, h_TMP, d_TMP)
 
-
 print "cTMP: %s cSK_4: %s" % ( cTMP, cSK_4)
-
 print "Matriz intermedia"
 print h_TMP
 print "Matriz entrada"
