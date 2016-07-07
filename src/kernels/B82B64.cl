@@ -32,6 +32,7 @@ __kernel void B82B64(
       }
     }
 
+    // Fill output matrix
 
     if((i <=((cTMP/8))-1)&& (j<=s-1))  {
       SK_2_64[(j*cTMP/8)+i] =  (ulong) TMP[(j*cTMP)+i];

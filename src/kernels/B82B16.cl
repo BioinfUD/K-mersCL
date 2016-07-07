@@ -26,15 +26,14 @@ __kernel void B82B16(
     }
 
     // Fussion
-    // N iteraciones for: 1, log_2(n/m), 8n es destino, 8m
     for(int c=2; c>=2; c/=2) {
       if((i<=(cTMP-1)) && (j<=s-1)) {
         TMP[(j*cTMP)+i] =  TMP[(j*cTMP)+i*2] | TMP[(j*cTMP)+i*2+1];
       }
     }
 
-
+    // Fill output matrix
     if((i <=((cTMP/2))-1)&& (j<=s-1))  {
       SK_2_16[(j*cTMP/2)+i] = TMP[(j*cTMP)+i];
-    } 
+    }
   }

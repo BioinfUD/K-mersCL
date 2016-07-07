@@ -15,13 +15,19 @@ Kernels para operaciones básicas
 * Conversión de K-mers: Caracteres a sistema numérico base 4 (C2N.py)
 * Conversión de K-mers: Sistema numérico base 4 a caracteres  (N2C.py)
 * Conversión de K-mers: Sistema numérico base 4 al decimal (usando  enteros de 8 bits) (N2B8.py) y viceversa (B82N.py)
+* Conversión de K-mers: Sistema numérico base 4 al decimal (usando  enteros de 16 bits) (N2B16.py) y viceversa (B162N.py)
+* Conversión de K-mers: Sistema numérico base 4 al decimal (usando  enteros de 32 bits) (N2B32.py) y viceversa (B322N.py)
+* Conversión de K-mers: Sistema numérico base 4 al decimal (usando  enteros de 64 bits) (N2B64.py) (D2N.py) y viceversa (B642N.py) (N2D.py)
 * Conversión de K-mers: Sistema numérico decimal (usando  enteros de 8 bits) a numerico decimal (enteros de 16 bits) (B82B16.py) y viceversa (B162B8.py)
 * Conversión de K-mers: Sistema numérico decimal (usando  enteros de 8 bits) a numerico decimal (enteros de 32 bits) (B82B32.py) y viceversa (B322B8.py)
 * Conversión de K-mers: Sistema numérico decimal (usando  enteros de 8 bits) a numerico decimal (enteros de 64 bits) (B82B64.py) y viceversa (B642B8.py)
-* Inverso de K-mers
-* Complemento de K-mers
-* Complemento inverso de K-mers
-* K-mers Canónicos
+* Conversión de K-mers: Sistema numérico decimal (usando  enteros de 16 bits) a numerico decimal (enteros de 32 bits) (B162B32.py) y viceversa (B322B16.py)
+* Conversión de K-mers: Sistema numérico decimal (usando  enteros de 16 bits) a numerico decimal (enteros de 64 bits) (B162B64.py) y viceversa (B642B16.py)
+* Conversión de K-mers: Sistema numérico decimal (usando  enteros de 32 bits) a numerico decimal (enteros de 64 bits) (B322B64.py) y viceversa (B642B32.py)
+* Inverso de K-mers (getR.py)
+* Complemento de K-mers (getC.py)
+* Complemento inverso de K-mers (getRC.py)
+* K-mers Canónicos (getCanonical.py)
 
 Kernels para operaciones relacionadas a estructuras de datos
 ------------------------------------------------------------

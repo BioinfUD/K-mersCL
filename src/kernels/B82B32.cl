@@ -32,8 +32,8 @@ __kernel void B82B32(
       }
     }
 
-
+     // Fill output matrix
     if((i <=((cTMP/4))-1)&& (j<=s-1))  {
       SK_2_32[(j*cTMP/4)+i] = TMP[(j*cTMP)+i];
-    } 
+    }
   }

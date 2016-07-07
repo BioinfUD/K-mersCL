@@ -1,7 +1,7 @@
 __kernel void N2B32(
    __global uchar* SK_4, // 8 bits (1 nucleotide per cell)
    __global uint* TMP, // Temporal matrix
-   __global uint* SK_2_32, // 64 bits (32 bits per kmer)
+   __global uint* SK_2_32, // 32 bits (32 bits per 16 bases)
    const unsigned int cSK_4, // Number of columns of input matrix
    const unsigned int cTMP, // Number of columns of TMP matrix
    const unsigned int s) // Number of kmers
