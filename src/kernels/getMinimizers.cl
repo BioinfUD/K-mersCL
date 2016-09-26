@@ -60,8 +60,6 @@ __kernel void getMinimizers(
                 } else if (w==m-1) {
                   TMP_P[(j*cTMP_P)+((i*2)*(1<<n))] = TMP_P[(j*cTMP_P)+((i*2)*(1<<n))];
                   break;
-                } else {  // Cuando funcione probar sin este else, que igual debe funcionar
-                  continue;
                 }
 
               }
@@ -80,7 +78,7 @@ __kernel void getMinimizers(
 
  }
 
- // Relleno matriz con minimizers en base 4
+ // Fill output matrix with minimizers
   if((i <= m-1)&& (j<=s-1))  {
     ML_4[(j*m)+i] =  SK_4[(j*cSK_4)+i+ML_P[j]];
  }

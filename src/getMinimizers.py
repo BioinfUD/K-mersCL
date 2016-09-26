@@ -6,7 +6,7 @@ import scipy
 #Kmer size
 K = 33
 #Number of kmers
-s = 15000000
+s = 15
 #minimizers size
 m = 4
 
