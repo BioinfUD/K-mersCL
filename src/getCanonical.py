@@ -4,6 +4,7 @@ import numpy as np
 from time import time
 from python_functions.utils import memory_usage_psutil
 
+"""
 def massive_or (elements):
     el = elements[0]
     for i in elements[1:]:
@@ -103,70 +104,55 @@ def sequential_function(SK_4, cSK_4, cTMP, S):
 # Random data
 pairs = [(16, 500000), (48, 500000), (16, 1000000), (48, 1000000)]
 for K, S in pairs:
-    total_bases = (K * S)
-    h_SK_4 = np.random.choice(range(0,4), total_bases).astype("uint8").reshape((S,K))
-    cSK_4 = h_SK_4.shape[1]
+"""
+K = 16
+S = 20000000
+total_bases = (K * S)
+h_SK_4 = np.random.choice(range(0,4), total_bases).astype("uint8").reshape((S,K))
+cSK_4 = h_SK_4.shape[1]
 
-    # Output matrix de complemento
-    h_CSK_4 = np.ndarray(h_SK_4.shape).astype(np.uint8)
-    # Matriz de complemento reverso
-    h_RCSK_4 = np.ndarray(h_SK_4.shape).astype(np.uint8)
+# Output matrix
+h_CASK_4 = np.ndarray(h_SK_4.shape).astype(np.uint8)
+h_CA_I = np.ndarray(S).astype(np.uint8)
+
+print "Doing for K {} S {}".format(K,S)
+
+print "Get canonical"
+# OpenCL Things
+contexto = cl.create_some_context()
+cola = cl.CommandQueue(contexto)
+
+# Program for reverse complement
+codigo_kernel_c = open("kernels/getCanonical.cl").read()
+programa_c = cl.Program(contexto, codigo_kernel_c).build()
+getCanonical = programa_c.getCanonical
+getCanonical.set_scalar_arg_dtypes([None, None, None,  np.uint32, np.uint32])
+
+# NDRange
+rango_global = (K, S)
+
+# Copy input data from host to device
+d_SK_4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_4)
+# Output matrix
+d_CASK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_CASK_4.nbytes)
+# Vector with flags
+d_CA_I = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_CA_I.nbytes)
 
 
+# Kernel execution for canonical kmer
+print "Executing kernel"
+t1 = time()
+getCanonical(cola, rango_global, None, d_SK_4, d_CA_I, d_CASK_4, K, S)
+cola.finish()
+print "Kernel took {} seconds in the execution".format(time()-t1)
+cl.enqueue_copy(cola, h_CASK_4, d_CASK_4)
+cl.enqueue_copy(cola, h_CA_I, d_CA_I)
 
-    rTMP = h_SK_4.shape[0]
-    if (h_SK_4.shape[1]%32)==0:
-        cTMP =  cSK_4
-    else:
-        cTMP = (32 - cSK_4%32) + cSK_4
-    print "Doing for K {} S {}".format(K,S)
-    print "Get canonical"
-    # OpenCL Things
-    contexto = cl.create_some_context()
-    cola = cl.CommandQueue(contexto)
-
-    # Program for reverse complement
-    codigo_kernel_c = open("kernels/getCanonical.cl").read()
-    programa_c = cl.Program(contexto, codigo_kernel_c).build()
-    getCanonical = programa_c.getCanonical
-    getCanonical.set_scalar_arg_dtypes([None, None, None, None, None, None, None, None, np.uint32, np.uint32, np.uint32])
-    # NDRange
-    rango_global = (cTMP, S)
-
-    # Copy input data from host to device
-    d_SK_4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_4)
-    #Complement buffer
-    d_RSK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_CSK_4.nbytes)
-    # Reverse complement buffer
-    d_RCSK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_RCSK_4.nbytes)
-    # TMPs Buffers
-    size_TMP = (64 * rTMP * cTMP) / 8
-    d_TMP = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, size_TMP)
-    d_TMPRC = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, size_TMP)
-    # Buffers for decimal representation
-    h_RCSK_10 =np.ndarray((rTMP, cTMP/32)).astype(np.uint64)
-    h_SK_10 =np.ndarray((rTMP,cTMP/32)).astype(np.uint64)
-    d_SK_10 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_RCSK_10.nbytes)
-    d_RCSK_10 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_RCSK_10.nbytes)
-    # Buffer for output matrix
-    d_CASK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_4.nbytes)
-    h_CASK_4 =np.ndarray((S, K)).astype(np.uint8)
-    # Kernel execution for canonical kmer
-    print "Executing kernel"
-    t1 = time()
-    getCanonical(cola, rango_global, None, d_SK_4, d_RSK_4, d_RCSK_4, d_TMP, d_TMPRC, d_SK_10, d_RCSK_10, d_CASK_4, cSK_4, cTMP, S)
-    cola.finish()
-    print "Kernel took {} seconds in the execution".format(time()-t1)
-    cl.enqueue_copy(cola, h_CASK_4, d_CASK_4)
-
-    print "Executing sequential function"
-    t1 = time()
-    CASK_4_s = sequential_function(h_SK_4, cSK_4, cTMP, S)
-    print "Function took {} seconds in the execution".format(time()-t1)
-
-    # Retrieve output
-
-    if (CASK_4_s==h_CASK_4).all():
-        print "Matrix are equal"
-    else:
-        print "Matrix not equal"
+print h_SK_4
+print h_CASK_4
+"""
+print "Executing sequential function"
+t1 = time()
+CASK_4_s = sequential_function(h_SK_4, cSK_4, cTMP, S)
+print "Function took {} seconds in the execution".format(time()-t1)
+"""
