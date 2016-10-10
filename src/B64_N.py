@@ -6,8 +6,8 @@ import psutil, os
 
 
 # Parameters
-k = 40
-s = 100
+k = 48
+s = 1000000
 
 # Compute output columns
 cSK_10_64  =  (k-1)/32 + 1
@@ -41,11 +41,13 @@ d_SK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_4.nbytes)
 
 # Execution Range
 rango_global = (k, s)
+rango_local = (k,1)
+
 
 # Kernel Execution
 print "Executing kernel"
 t1 = time()
-B64_N(cola, rango_global, None, d_SK_4, d_SK_10_64, k, s, cSK_10_64 )
+B64_N(cola, rango_global, rango_local, d_SK_4, d_SK_10_64, k, s, cSK_10_64 )
 cola.finish()
 print "Kernel took {} seconds in the execution".format(time()-t1)
 

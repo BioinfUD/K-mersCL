@@ -2,86 +2,60 @@ __kernel void getMinimizers(
    __global uchar* SK_4, // Input matrix with base 4 representation of kmers
    __global uchar* ML_4, // Output matrix with minimizers
    __global uchar* ML_P, // Output matrix with positions of minimizers in k-mers
-   __global uchar* TMP_P, // Output matrix with positions of minimizers in k-mers
-   const unsigned int cSK_4, // Number of columns of SK_4
-   const unsigned int cTMP_P, // Columns of TMP_P matriz
+   __global uint* ML_10_32, // Output matrix with positions of minimizers in k-mers
+   __global uint* MS_10_32, // Output matrix with positions of minimizers in k-mers
+   const unsigned int k,  // Number of M-mer
+   const unsigned int s,  // Rows of SK_4 (Total kmers)
    const unsigned int m,  // M-mer size
-   const unsigned int n_m,  // Number of M-mer
-   const unsigned int s)  // Rows of SK_4 (Total kmers)
+   const unsigned int ms  // Number of M-mer
+ )
 {
 
-   int i = get_global_id(0);
-   int j = get_global_id(1);
+   int x = get_global_id(0);
+   int y = get_global_id(1);
+   int z = get_global_id(2);
 
-   //
-   int pairs;
-   // Iters for detect minimizer
-   int iters = 0;
+   // FUNCTION: Get decimal value
+   if ((x<ms) && (y<s) && (z<m)){
+     MS_10_32[y*ms + x] = 0;
 
+   }
 
-   // FILL TMP_P Matrix
-   if((i <= cTMP_P-1)&& (j<=s-1))  {
-     TMP_P[(j*cTMP_P)+i] = i;
+   if ((y<s) && (z==0) && (x==0)) {
+     ML_10_32[y] = 2147483648;
+   }
+   barrier(CLK_GLOBAL_MEM_FENCE);
+
+  if ((x<ms) && (y<s) && (z<m)) // Hilos de procesamiento que ejecutan esta funcion
+  {
+
+    atomic_or(&MS_10_32[y*ms + x] , SK_4[y*k + (x+z)]<< (m-z-1)*2);
   }
 
-  float log_base = log2((float)cTMP_P);
-  if ((int)log_base < log_base) {
-     iters = (int)log_base + 1;
-  } else {
-     iters = (int) log_base;
-  }
+  barrier(CLK_GLOBAL_MEM_FENCE);
+  // FUNCTION: Get minimal of minimizers
+  if ((x<ms) && (y<s) && (z==0)) // Hilos de procesamiento que ejecutan esta funcion
+  {
 
-  int items = cTMP_P;
-  for(int n=0; n<=iters; n++) {
+   atomic_min(&ML_10_32[y],MS_10_32[y*ms + x]);// Min Atomico
 
-      if (items%2==0) {
-        pairs = items/2;
-      } else {
-        pairs = items/2 + 1;
-      }
+    // Es probable que se requiera una barrera de sincronizacion
+    barrier(CLK_GLOBAL_MEM_FENCE);
 
-      if((i<=(pairs-1)) && (j<=s-1)) {
-
-        ushort pos_A = (j*cSK_4) + (TMP_P[(j*cTMP_P)+(2*i*(1<<n))]);
-        ushort pos_B = (j*cSK_4) + (TMP_P[(j*cTMP_P)+((2*i)+1)*(1<<n)]);
-
-        if ((items%2!=0)&&(i==(pairs-1))) {
-          TMP_P[(j*cTMP_P)+((i*2)*(1<<n))] = TMP_P[(j*cTMP_P)+((i*2)*(1<<n))];
+    if (MS_10_32[y*ms + x] == ML_10_32[y] ) {
+        	ML_P[y]=x;
         }
-        else {
-            for (int w=0; w<m; w++) {
-                if (SK_4[pos_A+w] < SK_4[pos_B+w]) {
-                  TMP_P[(j*cTMP_P)+((i*2)*(1<<n))] = TMP_P[(j*cTMP_P)+((i*2)*(1<<n))];
-                  break;
-                }
-                else if (SK_4[pos_A+w] > SK_4[pos_B+w]) {
-                  TMP_P[(j*cTMP_P)+((i*2)*(1<<n))] = TMP_P[(j*cTMP_P)+(((i*2)+1)*(1<<n))];
-                  break;
-                } else if (w==m-1) {
-                  TMP_P[(j*cTMP_P)+((i*2)*(1<<n))] = TMP_P[(j*cTMP_P)+((i*2)*(1<<n))];
-                  break;
-                }
-
-              }
-        }
-
-
-        }
-
-          items = pairs;
 
   }
 
-  // Extract first column from TMP_P Matrix (Contains positions)
-  if((i == 0)&& (j<=s-1))  {
-    ML_P[j] = TMP_P[(j*cTMP_P)];
+  // FUNCTION: Llenado de la matriz ML_4
 
- }
+  if ((x==0) && (y<s) && (z<m)) // Hilos de procesamiento que ejecutan esta funcion
+  {
+    ML_4 [y*m + z]=SK_4[y*k+(z+ML_P[y])];
+  }
 
- // Fill output matrix with minimizers
-  if((i <= m-1)&& (j<=s-1))  {
-    ML_4[(j*m)+i] =  SK_4[(j*cSK_4)+i+ML_P[j]];
- }
+
 
 
 

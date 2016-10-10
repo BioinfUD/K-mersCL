@@ -15,12 +15,12 @@ __kernel void getKR(
    const unsigned int l
    )
 {
-   int i = get_global_id(0);
-   int j = get_global_id(1);
+   int x = get_global_id(0);
+   int y = get_global_id(1);
    // Valido para que no exista un overflow
-    if(i <= k-1 && j<=l-k)  {
+    if(x <= k-1 && y<=l-k)  {
 
-       KR[(j*k)+i] = R[j+i];
+       KR[(y*k)+x] = R[y+x];
 
    }
 }

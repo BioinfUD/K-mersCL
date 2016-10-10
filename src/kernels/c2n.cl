@@ -11,27 +11,27 @@ __kernel void C2N(
    const unsigned int k,
    const unsigned int s)
 {
-   int i = get_global_id(0);
-   int j = get_global_id(1);
+   int x = get_global_id(0);
+   int y = get_global_id(1);
    // Valido para que no exista un overflow
 
-   if((i <= k-1)&& (j<=s-1))  {
-     switch (SK[(j*k)+i]) {
+   if((x <= k-1)&& (y<=s-1))  {
+     switch (SK[(y*k)+x]) {
        // Evaluo codigo ascii
        case 65:
-        SK_4[(j*k)+i] = 0;
+        SK_4[(y*k)+x] = 0;
         break;
        case 67:
-         SK_4[(j*k)+i] = 1;
+         SK_4[(y*k)+x] = 1;
          break;
        case 71:
-         SK_4[(j*k)+i] = 2;
+         SK_4[(y*k)+x] = 2;
          break;
        case 84:
-         SK_4[(j*k)+i] = 3;
+         SK_4[(y*k)+x] = 3;
          break;
         default:
-         SK_4[(j*k)+i] = (j*k)+i;
+         SK_4[(y*k)+x] = (y*k)+x;
           break;
      }
    }

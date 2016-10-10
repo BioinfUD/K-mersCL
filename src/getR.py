@@ -6,8 +6,8 @@ SK_4 = [[3,3,3,3],[2,3,2,1],[1,2,3,1],[1,2,3,1],[0,1,2,3]] # Matriz con KMERS
 h_SK_4 =np.ndarray((len(SK_4), len(SK_4[0]))).astype(np.uint8)
 h_SK_4[:] = SK_4
 
-S = h_SK_4.shape[0] # Numeero de kmes
-K = h_SK_4.shape[1] # Tamano del kmer
+s = h_SK_4.shape[0] # Number of k-mes
+k = h_SK_4.shape[1] # Size of kmer
 
 # Output matrix
 h_RSK_4 = np.ndarray(h_SK_4.shape).astype(np.uint8)
@@ -25,9 +25,11 @@ d_SK_4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR
 # Output buffer
 d_RSK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_RSK_4.nbytes)
 # Execution Range
-rango_global = (K, S)
+rango_global = (k, s)
+rango_local = (k, 1)
+
 # Kernel Execution
-getR(cola, rango_global, None, d_SK_4, d_RSK_4, K, S)
+getR(cola, rango_global, rango_local, d_SK_4, d_RSK_4, k, s)
 cola.finish()
 # Retrieve output
 cl.enqueue_copy(cola, h_RSK_4, d_RSK_4)

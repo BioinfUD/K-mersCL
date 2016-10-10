@@ -3,7 +3,7 @@
 #pragma OPENCL EXTENSION cl_khr_local_int64_base_atomics : enable
 
 
-__kernel void N_64(
+__kernel void N_B64(
    __global uchar* SK_4, // 8 bits (1 nucleotide per cell)
    __global ulong* SK_10_64, // Output matrix
    const unsigned int k, // K-mer size
@@ -28,5 +28,6 @@ __kernel void N_64(
      atomic_or(&SK_10_64[(y*cSK_10_64) + l], n );
 
     }
+    barrier(CLK_GLOBAL_MEM_FENCE);
 
 }

@@ -27,10 +27,10 @@ def sequential_conversion(SK_h):
 # Random data
 pairs = [(16, 500000), (48, 500000), (16, 1000000), (48, 1000000)]
 
-for K, S in pairs:
-    total_bases = (K * S)
-    SK_h = np.random.choice(["A", "C", "T", "G"], total_bases).astype("S").reshape((S, K))
-    print "#############  KMERS  A BASE 4 K = {}, S = {}  #################".format(K, S)
+for k, s in pairs:
+    total_bases = (k * s)
+    SK_h = np.random.choice(["A", "C", "T", "G"], total_bases).astype("S").reshape((s, k))
+    print "#############  KMERS  A BASE 4 K = {}, S = {}  #################".format(k, s)
     # OpenCL Things
     contexto = cl.create_some_context()
     cola = cl.CommandQueue(contexto)
@@ -45,11 +45,12 @@ for K, S in pairs:
     SK_d = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=SK_h)
     cola.finish()
     # Execution Range
-    rango_global = (K, S)
+    rango_global = (k, s)
+    rango_local = (k, 1)
     # Kernel Execution
     print "Executing kernel"
     t1 = time()
-    C2N(cola, rango_global, None, SK_d, SK4_d, K, S)
+    C2N(cola, rango_global, rango_local, SK_d, SK4_d, k, s)
     cola.finish()
     print "Kernel took {} seconds in the execution".format(time()-t1)
     # Retrieve output

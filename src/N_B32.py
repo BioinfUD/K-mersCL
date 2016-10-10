@@ -25,10 +25,10 @@ print "#############  KMERS BASE 4 A DECIMAL (32bits) K = {}, S = {}  ##########
 # OpenCL definitions
 contexto = cl.create_some_context()
 cola = cl.CommandQueue(contexto)
-codigo_kernel = open("kernels/N_32.cl").read()
+codigo_kernel = open("kernels/N_B32.cl").read()
 programa = cl.Program(contexto, codigo_kernel).build()
-N_32 = programa.N_32
-N_32.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32, np.uint32])
+N_B32 = programa.N_B32
+N_B32.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32, np.uint32])
 
 # Copy input data from host to device
 d_SK_4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_4)
@@ -38,11 +38,12 @@ d_SK_10_32 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_10_32.nbytes)
 
 # Execution Range
 rango_global = (k, s)
+rango_local = (k,1)
 
 # Kernel Execution
 print "Executing kernel"
 t1 = time()
-N_32(cola, rango_global, None, d_SK_4, d_SK_10_32, k, s, cSK_10_32 )
+N_32(cola, rango_global, rango_local, d_SK_4, d_SK_10_32, k, s, cSK_10_32 )
 cola.finish()
 print "Kernel took {} seconds in the execution".format(time()-t1)
 

@@ -32,10 +32,10 @@ def sequential_function (SK_4, cSK_4, S):
 pairs = [(16, 500000), (48, 500000), (16, 1000000), (48, 1000000)]
 for K, S in pairs:
 """
-K = 16
-S = 5
-total_bases = (K * S)
-h_SK_4 = np.random.choice(range(0,4), total_bases).astype("uint8").reshape((S,K))
+k = 16
+s = 5
+total_bases = (k * s)
+h_SK_4 = np.random.choice(range(0,4), total_bases).astype("uint8").reshape((s,k))
 
 # Matriz de complemento reverso
 h_RCSK_4 = np.ndarray(h_SK_4.shape).astype(np.uint8)
@@ -51,7 +51,7 @@ programa_c = cl.Program(contexto, codigo_kernel_c).build()
 getRC = programa_c.getRC
 getRC.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32])
 # NDRange
-rango_global = (K, S)
+rango_global = (k, s)
 
 # Copy input data from host to device
 d_SK_4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_4)
@@ -61,7 +61,7 @@ d_RCSK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_RCSK_4.nbytes)
 # Kernel execution for reverse complement
 print "Executing kernel"
 t1 = time()
-getRC(cola, rango_global, None, d_SK_4, d_RCSK_4, K, S)
+getRC(cola, rango_global, None, d_SK_4, d_RCSK_4, k, s)
 cola.finish()
 cl.enqueue_copy(cola, h_RCSK_4, d_RCSK_4)
 print "Kernel took {} seconds in the execution".format(time()-t1)

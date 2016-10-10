@@ -1,4 +1,4 @@
-__kernel void N_32(
+__kernel void N_B32(
    __global uchar* SK_4, // 8 bits (1 nucleotide per cell)
    __global uint* SK_10_32, // Output matrix
    const unsigned int k, // K-mer size
@@ -23,5 +23,6 @@ __kernel void N_32(
      atomic_or(&SK_10_32[(y*cSK_10_32) + l], n );
 
     }
+    barrier(CLK_GLOBAL_MEM_FENCE);
 
 }

@@ -13,8 +13,8 @@ h_SK_4[:] = SK_4
 h_SK = np.chararray((len(SK_4), len(SK_4[0]))) # Defino dimensiones de matriz
 
 
-S = h_SK_4.shape[0] # Numeero de kmes
-K = h_SK_4.shape[1] # Tamano del kmer
+s = h_SK_4.shape[0] # Numeero de kmes
+k = h_SK_4.shape[1] # Tamano del kmer
 
 print "#############  KMERS  BASE 4 A KMERS CARACTER #################"
 # OpenCL Things
@@ -29,9 +29,10 @@ d_SK = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK.nbytes)
 # Copy input data from host to device
 d_SK4 = cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, hostbuf=h_SK_4)
 # Execution Range
-rango_global = (K, S)
+rango_global = (k, s)
+rango_local = (k, 1)
 # Kernel Execution
-N2C(cola, rango_global, None, d_SK, d_SK4, K, S)
+N2C(cola, rango_global, rango_local, d_SK, d_SK4, k, s)
 cola.finish()
 # Retrieve output
 cl.enqueue_copy(cola, h_SK, d_SK)

@@ -5,12 +5,12 @@ __kernel void getC(
    const unsigned int s)
 {
 
-   int i = get_global_id(0);
-   int j = get_global_id(1);
+   int x = get_global_id(0);
+   int y = get_global_id(1);
 
 
-   if((i <= cSK_4-1)&& (j<=s-1))  {
-     CSK_4[(j*cSK_4)+i]=(SK_4[(j*cSK_4)+i]*3+3)%4;
+   if((x <= cSK_4-1)&& (y<=s-1))  {
+     CSK_4[(y*cSK_4)+x]=(SK_4[(y*cSK_4)+x]*3+3)%4;
     }
 
 

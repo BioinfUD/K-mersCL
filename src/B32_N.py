@@ -41,11 +41,12 @@ d_SK_4 = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_SK_4.nbytes)
 
 # Execution Range
 rango_global = (k, s)
+rango_local = (k,1)
 
 # Kernel Execution
 print "Executing kernel"
 t1 = time()
-B32_N(cola, rango_global, None, d_SK_4, d_SK_10_32, k, s, cSK_10_32 )
+B32_N(cola, rango_global, rango_local, d_SK_4, d_SK_10_32, k, s, cSK_10_32 )
 cola.finish()
 print "Kernel took {} seconds in the execution".format(time()-t1)
 

@@ -27,7 +27,7 @@ def full_string(file_name, L):
 if len(sys.argv) != 4:
     # Use test data
     R = "TCAGCTACGTCAGCTACAGTCA"
-    L = len(R_h)
+    L = len(R)
     K = 3
     S = 1
 else:
@@ -55,6 +55,7 @@ R_d =  cl.Buffer(contexto, cl.mem_flags.READ_ONLY | cl.mem_flags.COPY_HOST_PTR, 
 KR_d = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, (L-K+1)*K )
 #Dimensiones
 rango_global = (K, L-K+1)
+rango_local = (K, 1)
 #Kernel Execution
 getKR = programa.getKR
 getKR.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32])
@@ -65,7 +66,7 @@ rtime = time() - rtime
 print "El kernel se ejecutó en ", rtime, "segundos"
 #Retrieve output
 cl.enqueue_copy(cola, KR_h, KR_d)
-print "Kmer size: {}, Number of reads: {}, Read size: {}".format(K, L, read_counter)
+print "Kmer size: {}, Number of reads: {}, Read size: {}".format(K, S, L)
 print "Input matrix"
 print R_h
 print "Output matrix"

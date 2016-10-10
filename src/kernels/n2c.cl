@@ -11,27 +11,27 @@ __kernel void N2C(
    const unsigned int k,
    const unsigned int s)
 {
-   int i = get_global_id(0);
-   int j = get_global_id(1);
+   int x = get_global_id(0);
+   int y = get_global_id(1);
    // Valido para que no exista un overflow
 
-   if((i <= k-1)&& (j<=s-1))  {
-     switch (SK_4[(j*k)+i]) {
+   if((x <= k-1)&& (y<=s-1))  {
+     switch (SK_4[(y*k)+x]) {
        // Evaluo codigo ascii
        case 0:
-        SK[(j*k)+i] = 65;
+        SK[(y*k)+x] = 65;
         break;
        case 1:
-         SK[(j*k)+i] = 67;
+         SK[(y*k)+x] = 67;
          break;
        case 2:
-         SK[(j*k)+i] = 71;
+         SK[(y*k)+x] = 71;
          break;
        case 3:
-         SK[(j*k)+i] = 84;
+         SK[(y*k)+x] = 84;
          break;
         default:
-         SK_4[(j*k)+i] = (j*k)+i;
+         SK_4[(y*k)+x] = (y*k)+x;
           break;
      }
    }
