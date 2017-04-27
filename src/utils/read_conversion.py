@@ -30,9 +30,9 @@ def int_to_base(i):
         return "U" # Not valid value
 
 
-def file_to_matrix(filename="/tmp/outfile.txt", r=190):
-    r = r if r else 190
-    in_file = open("/tmp/outfile.txt", "rU")
+def file_to_matrix(filename="/tmp/outfile.txt", r=180):
+    r = r if r else 180
+    in_file = open(filename, "rU")
     parser = SeqIO.parse(in_file, "fasta")
     record = parser.next()
     A = array(map(base_to_int,list(record.seq.tostring())), dtype=np.uint32)
