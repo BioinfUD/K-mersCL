@@ -1,3 +1,5 @@
+from Bio.Seq import Seq
+from Bio import SeqIO
 import numpy as np
 from numpy import array
 # File to matrix
@@ -32,10 +34,10 @@ def file_to_matrix(filename="/tmp/outfile.txt", r=190):
     r = r if r else 190
     in_file = open("/tmp/outfile.txt", "rU")
     parser = SeqIO.parse(in_file, "fasta")
-    r = parser.next()
-    A = array(map(base_to_int,list(r.seq.tostring())), dtype=np.uint32)
-    for r in parser:
-        newrow = array(map(base_to_int,list(r.seq.tostring())), dtype=np.uint32)
+    record = parser.next()
+    A = array(map(base_to_int,list(record.seq.tostring())), dtype=np.uint32)
+    for record in parser:
+        newrow = array(map(base_to_int,list(record.seq.tostring())), dtype=np.uint32)
         if newrow.shape[0] == r:
             A = np.vstack([A, newrow])
     return A
