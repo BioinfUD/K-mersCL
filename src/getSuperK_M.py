@@ -50,7 +50,7 @@ k = 31
 # Execution parameters
 X = (((256/k)*k - 1)/32 + 1)*32
 print "Ejecutando X hilos, X: {}".format(X)
-rango_global = (X, len(SR))
+rango_global = (X, nr)
 rango_local = (X, 1)
 
 
