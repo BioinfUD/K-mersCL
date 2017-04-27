@@ -29,6 +29,7 @@ def int_to_base(i):
 
 
 def file_to_matrix(filename="/tmp/outfile.txt", r=190):
+    r = r if r else 190
     in_file = open("/tmp/outfile.txt", "rU")
     parser = SeqIO.parse(in_file, "fasta")
     r = parser.next()
