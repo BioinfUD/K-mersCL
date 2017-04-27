@@ -4,6 +4,7 @@ from sys import argv
 from time import time
 
 from utils.read_conversion import file_to_matrix
+from utils.superkmer_utils import cut_minimizer_matrix
 
 """
 Execution:
@@ -60,13 +61,17 @@ h_TMP = np.empty((nr, nm)).astype(np.uint32)
 d_TMP = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_TMP.nbytes)
 h_counters = np.empty((nr,1)).astype(np.uint32)
 d_counters = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_counters.nbytes)
-
+# This matrix will contain the minimizers
+h_R2M_M = np.empty(h_R2M_G.shape).astype(np.uint32)
 # Execution
 getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, d_TMP, nr, r, k, m)
 cola.finish()
 cl.enqueue_copy(cola, h_TMP, d_TMP)
 cl.enqueue_copy(cola, h_counters, d_counters)
-cl.enqueue_copy(cola, h_R2M_G, d_R2M_G)
+cl.enqueue_copy(cola, h_R2M_M, d_R2M_G)
+# Cut the output matrix based on counters
+h_R2M_M = cut_minimizer_matrix(h_R2M_M, h_counters)
+
 print "Retrieved data"
 print h_counters
 print h_TMP[0]

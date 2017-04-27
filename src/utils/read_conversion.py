@@ -41,12 +41,3 @@ def file_to_matrix(filename="/tmp/outfile.txt", r=180):
         if newrow.shape[0] == r:
             A = np.vstack([A, newrow])
     return A
-
-
-def cut_minimizer_matrix(minimizer_matrix, counter_vector):
-    n_reads = counter_vector.shape[0]
-    cutted_matrix = []
-    for i in range(n_reads):
-        # Get the values
-        pass
-    return cutted_matrix
