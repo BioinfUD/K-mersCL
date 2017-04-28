@@ -27,7 +27,7 @@ def extract_superkmers(minimizer_matrix, input_file_path, output_path, m=4):
             if minimizer not in output_files:
                 minimizer = integer_to_bases(minimizer)
                 output_files[minimizer] = open(output_path+"/"+minimizer, "w")
-            output_files[minimizer].write(record.seq.tostring()[pos:end])
+            output_files[minimizer].write(str(record.seq)+"\n")
             n_superkmers+=1
     return n_superkmers
 
