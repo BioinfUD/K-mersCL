@@ -63,15 +63,14 @@ def getSuperK_M(input_file, output_path, r):
     minimizer_matrix = cut_minimizer_matrix(h_R2M_G, h_counters)
     print "Writing superkmers to disk"
     extract_superkmers(minimizer_matrix, input_file, output_path, m=4)
-
+"""
+    # Debug data
     print "Retrieved data"
     print h_counters
     print h_TMP[0]
     print h_R2M_G[0]
     del(h_R2M_G)
-
-
-
+"""
 
 if __name__ == "__main__":
     """
