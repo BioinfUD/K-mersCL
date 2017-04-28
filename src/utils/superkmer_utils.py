@@ -16,8 +16,7 @@ def extract_superkmers(minimizer_matrix, input_file_path, output_path, m=4):
     parser = SeqIO.parse(input_file_path, "fasta")
     output_files = {}
     n_superkmers = 0
-    for value in variable:
-        pass row in minimizer_matrix:
+    for row in minimizer_matrix:
         record = parser.next()
         print "Extracting superkmers for seqID: {}, superkmers: {}".format(record.id, str(row))
         for v in row:
