@@ -57,7 +57,7 @@ def getSuperK_M(input_file, output_path, r):
     cola.finish()
     cl.enqueue_copy(cola, h_TMP, d_TMP)
     cl.enqueue_copy(cola, h_counters, d_counters)
-    cl.enqueue_copy(cola, h_R2M_M, d_R2M_G)
+    cl.enqueue_copy(cola, h_R2M_G, d_R2M_G)
     # Cut the output matrix based on counters
     print "Cutting the matrix based on available superkmers"
     minimizer_matrix = cut_minimizer_matrix(h_R2M_G, h_counters)
