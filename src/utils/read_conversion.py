@@ -17,7 +17,7 @@ def base_to_int(b):
         return 99 # Not valid value
 
 
-def int_to_base(i):
+def int_to_base(b):
     if b==0:
         return "A"
     if b==1:
@@ -28,6 +28,16 @@ def int_to_base(i):
         return "T"
     else:
         return "U" # Not valid value
+
+
+def integer_to_bases(number, m=4):
+    mask = 0b11
+    bases = ""
+    for c in (range(m-1, -1, -1)):
+        #print "number: {}, number bin {}, c*2: {}".format(number, bin(number), c*2)
+        base = int_to_base((number >> c*2) & mask)
+        bases = bases + base
+    return bases
 
 
 def file_to_matrix(filename="/tmp/outfile.txt", r=180):
