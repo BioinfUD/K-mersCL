@@ -62,7 +62,7 @@ def getSuperK_M(input_file, output_path, r):
     print "Cutting the matrix based on available superkmers"
     minimizer_matrix = cut_minimizer_matrix(h_R2M_G, h_counters)
     print "Writing superkmers to disk"
-    extract_superkmers = extract_superkmers(minimizer_matrix, input_file, output_path, m=4)
+    extract_superkmers(minimizer_matrix, input_file, output_path, m=4)
 
     print "Retrieved data"
     print h_counters
