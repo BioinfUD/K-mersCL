@@ -21,20 +21,23 @@ def extract_superkmers(minimizer_matrix, input_file_path, output_path, m=4):
         print "Extracting superkmers for seqID: {}, superkmers: {}".format(record.id, str(row))
         for v in row:
             minimizer = (v & 0b11111111111100000000000000000000) >> 20
-            pos = (v & 0b00000000000011111111110000000000) >> 10
-            size = v & 0b00000000000000000000001111111111
+            pos = (v & 0b00000000000011111111111100000000) >> 8
+            size = v & 0b00000000000000000000000011111111
             end =  pos + size
             if minimizer not in output_files:
                 minimizer = integer_to_bases(minimizer)
                 output_files[minimizer] = open(output_path+"/"+minimizer, "w")
-            output_files[minimizer].write(str(record.seq)+"\n")
+            output_files[minimizer].write(str(record.seq)[pos:end]+"\n")
             n_superkmers+=1
     return n_superkmers
 
 """
 Test case for extract_superkmers_locations
-Min = 228 # TGCA
+Min = 228 # TGCA 000011100100
 Pos = 7  # 0000000111
 Size = 15 # 0000001111
 v = 0b00001110010000000001110000001111
+minimizer = (v & 0b11111111111100000000000000000000) >> 20
+pos = (v & 0b00000000000011111111110000000000) >> 10
+size = v & 0b00000000000000000000001111111111
 """
