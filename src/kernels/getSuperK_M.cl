@@ -135,11 +135,11 @@ barrier(CLK_LOCAL_MEM_FENCE);
 
  if ((x < (nt*nmk)) && (y<nr)) {
    if (b == MT[idt]) {
-     if (idt == 0){
-        PMT[idt] = atomic_max(&PMT[idt],p);
-      } else {
-        PMT[idt] = atomic_min(&PMT[idt],p);
-      };
+    -// if (idt == 0){
+        atomic_max(&PMT[idt],p);
+ //      } else {
+  //      PMT[idt] = atomic_min(&PMT[idt],p);
+    //  };
    }
  }
 barrier(CLK_LOCAL_MEM_FENCE);
@@ -211,7 +211,7 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
                {
     	            if (b == MT[idt])
                     {
-                      atomic_min(&PMT[idt],p);
+                      atomic_max(&PMT[idt],p);
                     }
                }
     		  }
@@ -244,6 +244,7 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
 
 
     // Compact output
+/*
     lsd = ls/m; // lsd: Local space divisions
     nm=r-m+1; // nm: Number of m-mers per read
     ts=(nm-1)/lsd + 1; // ts: Tile size
@@ -263,11 +264,10 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
       }
     }
     barrier(CLK_LOCAL_MEM_FENCE);
-
+*/
 
     //   //FUNCTION: Local2Global
     //   //Reads in local memory to Read in global memory
-
     ts = ls;  // ts: Tile size, work group size
     nt = (r-1)/ts + 1; // nt: Number of tiles
 
