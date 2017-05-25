@@ -116,7 +116,7 @@ __kernel void getSuperK_M(
       MT[x] = 0xFFFFFFFF;
       PMT[x] = 0xFFFFFFF;
     }
-
+    PMT[0] = 0;
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -135,11 +135,11 @@ barrier(CLK_LOCAL_MEM_FENCE);
 
  if ((x < (nt*nmk)) && (y<nr)) {
    if (b == MT[idt]) {
-    // if (idt == 0){
+     if (idt == 0){
+        atomic_max(&PMT[idt],p);
+        } else {
         atomic_min(&PMT[idt],p);
-      //  } else {
-    //    atomic_min(&PMT[idt],p);
-    //  };
+      };
    }
  }
 barrier(CLK_LOCAL_MEM_FENCE);
@@ -252,7 +252,7 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
 
 
 
-    // Compact output
+    /* Compact output
     lsd = ls/m; // lsd: Local space divisions
     nm=r-m+1; // nm: Number of m-mers per read
     ts=(nm-1)/lsd + 1; // ts: Tile size
@@ -270,7 +270,7 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
            R2M_L[c] =  ((mR_10[p] << 20) & 0xFFF00000) | ((b >> 4) & 0x000FFF00) | a;
         }
       }
-    }
+    } */
     barrier(CLK_LOCAL_MEM_FENCE);
 
 
