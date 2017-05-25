@@ -112,11 +112,11 @@ __kernel void getSuperK_M(
     lsd = ls/nmk;
     ts = (nkr-1)/lsd + 1; // ts: Tile size
     nt = (nkr-1)/ts + 1; // nt: Number of tiles
-
     if (x < nt){
       MT[x] = 0xFFFFFFFF;
-      PMT[x] = 0;
+      PMT[x] = 0xFFFFFFF;
     }
+
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -135,10 +135,10 @@ barrier(CLK_LOCAL_MEM_FENCE);
 
  if ((x < (nt*nmk)) && (y<nr)) {
    if (b == MT[idt]) {
-    -// if (idt == 0){
-        atomic_max(&PMT[idt],p);
- //      } else {
-  //      PMT[idt] = atomic_min(&PMT[idt],p);
+    // if (idt == 0){
+        atomic_min(&PMT[idt],p);
+      //  } else {
+    //    atomic_min(&PMT[idt],p);
     //  };
    }
  }
@@ -172,14 +172,19 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
         if (flag){
           if ((x%nmk - z%nmk) == 0){
             if (b < MT[idt]){
+
               // Atomic OR - end of super k-mers
               atomic_or(&R2M_L[PMT[idt]], (start + z + k - 1));
+              printf ("P1: PMT[idt]: %d,  R2M_L[PMT[idt]]: %d, b: %d, MT[idt]: %d, (start + z + k - 1): %d, z: %d, start: %d\n",
+                      PMT[idt], R2M_L[PMT[idt]], b, MT[idt], start + z + k - 1, z, start);
 
               PMT[idt] = start+nmk+z;
 
               MT[idt] = b;
               // Atomic OR - start of super k-mers
               atomic_or(&R2M_L[PMT[idt]], ((start + z + 1) << 12));
+              printf ("P2: PMT[idt]: %d,  R2M_L[PMT[idt]]: %d, b: %d, MT[idt]: %d, (start + z + k - 1)<<12: %d, z: %d, start: %d\n",
+                      PMT[idt], R2M_L[PMT[idt]], b, MT[idt], (start + z + 1) << 12, z, start);
             }
           }
         }
@@ -211,7 +216,8 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
                {
     	            if (b == MT[idt])
                     {
-                      atomic_max(&PMT[idt],p);
+                      PMT[idt] = 0xFFFFFFFF;
+                      atomic_min(&PMT[idt],p);
                     }
                }
     		  }
@@ -222,6 +228,7 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
   			if (!flag)
           {
           if (p == PMT[idt]) {
+
             if (x%nmk <= z%nmk){
               PMT[idt] = start + ((z/nmk)+1)*nmk + (x%nmk);
             } else {
@@ -229,6 +236,7 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
             }
             // Atomic OR - start of super k-mers
             atomic_or(&R2M_L[PMT[idt]], ((start + z + 1) << 12));
+
           }
 
          }
@@ -243,8 +251,8 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
       barrier(CLK_LOCAL_MEM_FENCE);
 
 
+
     // Compact output
-/*
     lsd = ls/m; // lsd: Local space divisions
     nm=r-m+1; // nm: Number of m-mers per read
     ts=(nm-1)/lsd + 1; // ts: Tile size
@@ -258,13 +266,13 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
         if (b != 0)
         {
     	     c = atom_inc(&counter); // Atomic increment
-           a = ((b & 0x00000FFF) - ((b >> 12) & 0x00000FFF)) & 0x000000FF; // a is the size
+           a = ((b & 0x00000FFF) - ((b >> 12) & 0x00000FFF) + 1) & 0x000000FF; // a is the size
            R2M_L[c] =  ((mR_10[p] << 20) & 0xFFF00000) | ((b >> 4) & 0x000FFF00) | a;
         }
       }
     }
     barrier(CLK_LOCAL_MEM_FENCE);
-*/
+
 
     //   //FUNCTION: Local2Global
     //   //Reads in local memory to Read in global memory
