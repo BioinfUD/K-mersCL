@@ -19,7 +19,7 @@ __kernel void getSuperK_M(
 
 
   __local uint R2M_L[READ_SIZE]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
-  __local uint mR_10[READ_SIZE-m+1]; // Vector containing mmers, len = lenght of reads - minimizer size + 1
+  __local uint mR_10[MMERS_IN_READ]; // Vector containing mmers, len = lenght of reads - minimizer size + 1
   __local uint counter; // Size of mmers
   __local uint MT[NUMBER_OF_TILES]; // Position of minimizer in each tile
   __local uint PMT[NUMBER_OF_TILES]; // Current minimizer in each tile

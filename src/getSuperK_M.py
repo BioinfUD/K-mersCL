@@ -39,12 +39,14 @@ def getSuperK_M(input_file, output_path, r):
     nkr = r - k + 1
     lsd = X // nmk
     ts = ((nkr - 1) / lsd) + 1
+    MMERS_IN_READ = r - m + 1
     NUMBER_OF_TILES = ((nkr - 1)//ts) + 1
     # OpenCL things
     contexto = cl.create_some_context()
     cola = cl.CommandQueue(contexto)
     codigo_kernel = open("kernels/getSuperK_M_TEMPLATE.cl").read()
-    codigo_kernel = codigo_kernel.replace("READ_SIZE", str(READ_SIZE)).replace("NUMBER_OF_TILES", str(NUMBER_OF_TILES))
+    codigo_kernel = codigo_kernel.replace("READ_SIZE", str(READ_SIZE)).replace("NUMBER_OF_TILES", str(NUMBER_OF_TILES))\
+                                 .replace("MMERS_IN_READ", str(MMERS_IN_READ))
     programa = cl.Program(contexto, codigo_kernel).build()
     getSuperK_M = programa.getSuperK_M
     getSuperK_M.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32, np.uint32,np.uint32])
