@@ -24,6 +24,7 @@ def extract_superkmers(minimizer_matrix, input_file_path, output_path, m=4):
             pos = (v & 0b00000000000011111111111100000000) >> 8
             size = v & 0b00000000000000000000000011111111
             end =  pos + size
+            print "Min {},  pos {}, size {}, end{}".format(minimizer, pos, size, end)
             minimizer_str = str(minimizer)
             if minimizer_str not in output_files:
                 output_files[minimizer_str] = open(output_path+"/"+minimizer_str, "w")
