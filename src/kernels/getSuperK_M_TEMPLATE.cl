@@ -18,11 +18,11 @@ __kernel void getSuperK_M(
    ls = get_local_size(0);
 
 
-  __local uint R2M_L[180]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
-  __local uint mR_10[180-4+1]; // Vector containing mmers, len = lenght of reads - minimizer size + 1
+  __local uint R2M_L[READ_SIZE]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
+  __local uint mR_10[READ_SIZE-m+1]; // Vector containing mmers, len = lenght of reads - minimizer size + 1
   __local uint counter; // Size of mmers
-  __local uint MT[9]; // Position of minimizer in each tile
-  __local uint PMT[9]; // Current minimizer in each tile
+  __local uint MT[NUMBER_OF_TILES]; // Position of minimizer in each tile
+  __local uint PMT[NUMBER_OF_TILES]; // Current minimizer in each tile
 
   if (x==0) {
     counter = 0;
@@ -274,8 +274,8 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
     barrier(CLK_LOCAL_MEM_FENCE);
 
 
-    //FUNCTION: Local2Global
-    //Reads in local memory to Read in global memory
+    //   //FUNCTION: Local2Global
+    //   //Reads in local memory to Read in global memory
     ts = ls;  // ts: Tile size, work group size
     nt = (r-1)/ts + 1; // nt: Number of tiles
 

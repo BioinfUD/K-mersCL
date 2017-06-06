@@ -23,28 +23,34 @@ h_R2M_G[:] = SR
 """
 def getSuperK_M(input_file, output_path, r):
     h_R2M_G = file_to_matrix(input_file, r)
-    # OpenCL things
-    contexto = cl.create_some_context()
-    cola = cl.CommandQueue(contexto)
-    codigo_kernel = open("kernels/getSuperK_M.cl").read()
-    programa = cl.Program(contexto, codigo_kernel).build()
-    getSuperK_M = programa.getSuperK_M
-    getSuperK_M.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32, np.uint32,np.uint32])
-    # Copy data from host to device
-    d_R2M_G = cl.Buffer(contexto, cl.mem_flags.COPY_HOST_PTR, hostbuf=h_R2M_G)
-    h_R2M_G_test  = np.empty(h_R2M_G.shape).astype(np.uint32)
-
     # Kernel parameters
     nr = h_R2M_G.shape[0]
     r = h_R2M_G.shape[1]
     m = 4
     k = 31
     # Execution parameters
-    X = (((256/k)*k - 1)/32 + 1)*32
+    X = (((256//k)*k - 1)//32 + 1)*32
     print "Ejecutando X hilos, X: {}".format(X)
     rango_global = (X, nr)
     rango_local = (X, 1)
-
+    # Kernel replace parameters
+    READ_SIZE = r
+    nmk = k - m + 1
+    nkr = r - k + 1
+    lsd = X // nmk
+    ts = ((nkr - 1) / lsd) + 1
+    NUMBER_OF_TILES = ((nkr - 1)//ts) + 1
+    # OpenCL things
+    contexto = cl.create_some_context()
+    cola = cl.CommandQueue(contexto)
+    codigo_kernel = open("kernels/getSuperK_M_TEMPLATE.cl").read()
+    codigo_kernel = codigo_kernel.replace("READ_SIZE", str(READ_SIZE)).replace("NUMBER_OF_TILES", str(NUMBER_OF_TILES))
+    programa = cl.Program(contexto, codigo_kernel).build()
+    getSuperK_M = programa.getSuperK_M
+    getSuperK_M.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32, np.uint32,np.uint32])
+    # Copy data from host to device
+    d_R2M_G = cl.Buffer(contexto, cl.mem_flags.COPY_HOST_PTR, hostbuf=h_R2M_G)
+    h_R2M_G_test  = np.empty(h_R2M_G.shape).astype(np.uint32)
     # Output matrix
     nm = r - m + 1;
     h_TMP = np.empty((nr, nm)).astype(np.uint32)
