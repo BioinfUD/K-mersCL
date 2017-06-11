@@ -22,6 +22,7 @@ h_R2M_G =np.ndarray((len(SR), len(SR[0]))).astype(np.uint32)
 h_R2M_G[:] = SR
 """
 def getSuperK_M(input_file, output_path, r):
+    print "Leyendo datos desde archivo"
     h_R2M_G = file_to_matrix(input_file, r)
     # Kernel parameters
     nr = h_R2M_G.shape[0]
@@ -60,6 +61,7 @@ def getSuperK_M(input_file, output_path, r):
     h_counters = np.empty((nr,1)).astype(np.uint32)
     d_counters = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_counters.nbytes)
     # Execution
+    print "Executing kernel"
     getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, d_TMP, nr, r, k, m)
     print "Execution finished, copying data from device to host memory"
     cola.finish()

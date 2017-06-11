@@ -1,8 +1,9 @@
 from Bio.Seq import Seq
 from Bio import SeqIO
 import numpy as np
-from numpy import array
-# File to matrix
+from numpy import array, ndarray
+import os
+
 
 def base_to_int(b):
     if b=="A":
@@ -41,13 +42,19 @@ def integer_to_bases(number, m=4):
 
 
 def file_to_matrix(filename="/tmp/outfile.txt", r=180):
-    r = r if r else 180
     in_file = open(filename, "rU")
     parser = SeqIO.parse(in_file, "fasta")
     record = parser.next()
-    A = array(map(base_to_int,list(record.seq.tostring())), dtype=np.uint32)
+    avg_record_bytes = r + len(str(record.id)) + 2
+    input_file_size = os.path.getsize(filename)
+    estimated_reads = input_file_size/avg_record_bytes
+    print "Estimated number of reads: {}".format(estimated_reads)
+    A = ndarray(shape=(estimated_reads, r), dtype=np.uint32)
+    counter = 0	    
     for record in parser:
-        newrow = array(map(base_to_int,list(record.seq.tostring())), dtype=np.uint32)
-        if newrow.shape[0] == r:
-            A = np.vstack([A, newrow])
-    return A
+        A[counter] = map(base_to_int,list(record.seq.tostring()))
+        if counter%100000 == 0:
+            print "{} reads has been loaded".format(counter)
+	counter+=1
+    print "{} reads has been loaded, initial estimate was {} reads".format(counter, estimated_reads)
+    return A[0:counter]
