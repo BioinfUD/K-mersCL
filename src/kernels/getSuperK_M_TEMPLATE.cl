@@ -175,16 +175,16 @@ for (int z=0; z < ts ; z++){ // Cómputo en serie del min del resto de k-mers de
 
               // Atomic OR - end of super k-mers
               atomic_or(&R2M_L[PMT[idt]], (start + z + k - 1));
-              printf ("P1: PMT[idt]: %d,  R2M_L[PMT[idt]]: %d, b: %d, MT[idt]: %d, (start + z + k - 1): %d, z: %d, start: %d\n",
-                      PMT[idt], R2M_L[PMT[idt]], b, MT[idt], start + z + k - 1, z, start);
+        //      printf ("P1: PMT[idt]: %d,  R2M_L[PMT[idt]]: %d, b: %d, MT[idt]: %d, (start + z + k - 1): %d, z: %d, start: %d\n",
+          //            PMT[idt], R2M_L[PMT[idt]], b, MT[idt], start + z + k - 1, z, start);
 
               PMT[idt] = start+nmk+z;
 
               MT[idt] = b;
               // Atomic OR - start of super k-mers
               atomic_or(&R2M_L[PMT[idt]], ((start + z + 1) << 12));
-              printf ("P2: PMT[idt]: %d,  R2M_L[PMT[idt]]: %d, b: %d, MT[idt]: %d, (start + z + k - 1)<<12: %d, z: %d, start: %d\n",
-                      PMT[idt], R2M_L[PMT[idt]], b, MT[idt], (start + z + 1) << 12, z, start);
+          //    printf ("P2: PMT[idt]: %d,  R2M_L[PMT[idt]]: %d, b: %d, MT[idt]: %d, (start + z + k - 1)<<12: %d, z: %d, start: %d\n",
+            //          PMT[idt], R2M_L[PMT[idt]], b, MT[idt], (start + z + 1) << 12, z, start);
             }
           }
         }

@@ -1,6 +1,7 @@
 from Bio.Seq import Seq
 from Bio import SeqIO
 import numpy as np
+import sys
 from numpy import array, ndarray
 import os
 
@@ -40,21 +41,26 @@ def integer_to_bases(number, m=4):
         bases = bases + base
     return bases
 
-
+# For fasta file
 def file_to_matrix(filename="/tmp/outfile.txt", r=180):
     in_file = open(filename, "rU")
-    parser = SeqIO.parse(in_file, "fasta")
-    record = parser.next()
-    avg_record_bytes = r + len(str(record.id)) + 2
+    first_line = in_file.readline().strip()
+    second_line = in_file.readline().strip()
+    avg_record_bytes = len(str(first_line)) + len(str(second_line)) + 2
     input_file_size = os.path.getsize(filename)
     estimated_reads = input_file_size/avg_record_bytes
-    print "Estimated number of reads: {}".format(estimated_reads)
+    sys.stdout.write("Estimated number of reads: {}\n".format(estimated_reads))
     A = ndarray(shape=(estimated_reads, r), dtype=np.uint32)
-    counter = 0	    
-    for record in parser:
-        A[counter] = map(base_to_int,list(record.seq.tostring()))
+    A[0] = map(base_to_int,list(str(second_line)))
+    counter = 1
+    in_file.readline() # Skip id line
+    line = in_file.readline() # Skip id line
+    while line:
+        A[counter] = map(base_to_int,list(str(line.strip())))
         if counter%100000 == 0:
-            print "{} reads has been loaded".format(counter)
-	counter+=1
-    print "{} reads has been loaded, initial estimate was {} reads".format(counter, estimated_reads)
+            sys.stdout.write("{} reads has been loaded\n".format(counter))
+        in_file.readline()  # Skip id line
+        line = in_file.readline()
+        counter+=1
+    sys.stdout.write("{} reads has been loaded, initial estimate was {} reads\n".format(counter, estimated_reads))
     return A[0:counter]

@@ -1,5 +1,6 @@
 import numpy as np
 import pyopencl as cl
+import sys
 from sys import argv
 from time import time
 
@@ -7,22 +8,8 @@ from utils.read_conversion import file_to_matrix
 from utils.superkmer_utils import cut_minimizer_matrix, extract_superkmers
 
 
-"""
-Remove this comment to test with this data
-# Matrix with reads
-SR = [
-   [1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0,1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0]
-    # [1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0,1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0],
-    # [1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0,1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0],
-    # [1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0,1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0],
-    # [1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0,1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0],
-    # [1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0,1,0,1,2,2,2,1,2,3,3,1,0,0,1,2,3,1,2,3,0,0,1,2,2,1,1,1,2,3,2,1,2,2,3,1,1,1,2,3,3,2,2,1,0,0,0,1,2,3,1,1,1,0,1,1,2,3,2,2,2,2,1,1,1,1,1,1,1,2,3,2,1,0,0,1,1,1,3,3,2,0,0,0,1,2,1,1,2,3,0]
-    ]
-h_R2M_G =np.ndarray((len(SR), len(SR[0]))).astype(np.uint32)
-h_R2M_G[:] = SR
-"""
 def getSuperK_M(input_file, output_path, r):
-    print "Leyendo datos desde archivo"
+    sys.stdout.write("Loading sequences from file {}\n".format(input_file))
     h_R2M_G = file_to_matrix(input_file, r)
     # Kernel parameters
     nr = h_R2M_G.shape[0]
@@ -31,7 +18,7 @@ def getSuperK_M(input_file, output_path, r):
     k = 31
     # Execution parameters
     X = (((256//k)*k - 1)//32 + 1)*32
-    print "Ejecutando X hilos, X: {}".format(X)
+    sys.stdout.write("Ejecutando X hilos, X: {}\n".format(X))
     rango_global = (X, nr)
     rango_local = (X, 1)
     # Kernel replace parameters
@@ -56,23 +43,25 @@ def getSuperK_M(input_file, output_path, r):
     h_R2M_G_test  = np.empty(h_R2M_G.shape).astype(np.uint32)
     # Output matrix
     nm = r - m + 1;
+    sys.stdout.write("Copying data from host to GPU\n")
     h_TMP = np.empty((nr, nm)).astype(np.uint32)
     d_TMP = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_TMP.nbytes)
     h_counters = np.empty((nr,1)).astype(np.uint32)
     d_counters = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_counters.nbytes)
     # Execution
-    print "Executing kernel"
+    sys.stdout.write("Executing kernel\n")
     getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, d_TMP, nr, r, k, m)
-    print "Execution finished, copying data from device to host memory"
     cola.finish()
+    sys.stdout.write("Execution finished, copying data from device to host memory\n")
     cl.enqueue_copy(cola, h_TMP, d_TMP)
     cl.enqueue_copy(cola, h_counters, d_counters)
     cl.enqueue_copy(cola, h_R2M_G, d_R2M_G)
     # Cut the output matrix based on counters
-    print "Cutting the matrix based on available superkmers"
+    sys.stdout.write("Matrix copied from gpu to host. Cutting the matrix based on available superkmers\n")
     minimizer_matrix = cut_minimizer_matrix(h_R2M_G, h_counters)
-    print "Writing superkmers to disk"
+    sys.stdout.write("Writing superkmers to disk\n")
     extract_superkmers(minimizer_matrix, input_file, output_path, m=4)
+    sys.stdout.write("Done execution \n")
 """
     # Debug data
     print "Retrieved data"

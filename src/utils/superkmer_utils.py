@@ -1,4 +1,5 @@
 from Bio import SeqIO
+from io import FileIO, BufferedWriter
 from read_conversion import int_to_base, integer_to_bases
 
 def cut_minimizer_matrix(minimizer_matrix, counter_vector):
@@ -26,9 +27,12 @@ def extract_superkmers(minimizer_matrix, input_file_path, output_path, m=4):
             #print "Min {},  pos {}, size {}, end{}".format(minimizer, pos, size, end)
             minimizer_str = str(minimizer)
             if minimizer_str not in output_files:
-                output_files[minimizer_str] = open(output_path+"/"+minimizer_str, "w")
+                output_files[minimizer_str] = BufferedWriter(FileIO(output_path+"/"+minimizer_str, "w"), buffer_size=5000000)
             output_files[minimizer_str].write(str(record.seq)[pos:end]+"\n")
             n_superkmers+=1
+    for k,v in output_files.items():
+        v.flush()
+        v.close()
     return n_superkmers
 
 """
