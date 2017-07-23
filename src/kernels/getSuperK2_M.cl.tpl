@@ -15,13 +15,13 @@ __kernel void getSuperK_M(
    xl = get_local_id(0);
    yl = get_local_id(1);
 
-  __local uint RSK[{read_size}]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
+  __local uint RSK[READ_SIZE]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
 
-  __local uint RCMT[{second_mt}}]; // Position of minimizer in each tile, (nm-1)/(ts)   +  1, ts -> (nm-1)/lsd   + 1, nm=r-m-1, lsd=localSpaceSize/m
-  __local uint MT[{nt_max}}]; // max(nt1, nt2) , max(nt anterior , nt nuevo)
+  __local uint RCMT[SECOND_MT]; // Position of minimizer in each tile, (nm-1)/(ts)   +  1, ts -> (nm-1)/lsd   + 1, nm=r-m-1, lsd=localSpaceSize/m
+  __local uint MT[NT_MAX]; // max(nt1, nt2) , max(nt anterior , nt nuevo)
   __local uint counter, mp, nmp, minimizer; // minimizer position, new minimizer  position, minimizer
    // Mask to use when compacting
-    a = {a_mask}; // Mask
+    a = A_MASK; // Mask
 
    nmk = k - m + 1;
    // Global to local

@@ -1,13 +1,33 @@
 import numpy as np
 import pyopencl as cl
 import sys
-from sys import argv
-from time import time
+import argparse
+import os
 
 from utils.read_conversion import file_to_matrix
 from utils.superkmer_utils import cut_minimizer_matrix, extract_superkmers
 
-def extract_superkmers(minimizer_matrix, m=4):
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description="Obtains superkmers (Based on substrings) from a input file given a mmer, kmer sizes. Does the computing on GPU")
+    parser.add_argument('--kmer', dest="kmer", default="31",
+                        help="Kmer size to perform performance assesment (Comma separated). Default value: 31")
+    parser.add_argument('--mmer', dest="mmer", default="4",
+                        help="Mmer size to perform performance assesment (Comma separated)")
+    parser.add_argument('--input_file', dest="input_file", help="List of paths to evaluate files (Comma separated)")
+    parser.add_argument('--read_size', dest="read_size",
+                        help="Read size of each file specified on --input_files option")
+    parser.add_argument('--output_path', dest="output_path", default="output_superkmers",
+                        help="Folder where the stats and output will be stored")
+    args = parser.parse_args()
+    kmer = args.kmer
+    mmer = args.mmer
+    input_file = args.input_file
+    read_size = args.read_size
+    output_path = args.output_path
+    return int(kmer), int(mmer), input_file, int(read_size), output_path
+
+def extract_superkmers(minimizer_matrix, input_file, output_path, m=4):
     n_superkmers = 0
     for row in minimizer_matrix:
         print "superkmers: {}".format(str(row))
@@ -15,7 +35,7 @@ def extract_superkmers(minimizer_matrix, m=4):
             minimizer = (v & 0b11111111111111000000000000000000) >> 18
             pos = (v & 0b00000000000000111111111100000000) >> 8
             size = v & 0b00000000000000000000000011111111
-            end =  pos + size
+            end = pos + size
             minimizer_str = str(minimizer)
             print "Valor {} Min {},  ini {}, size {}, end{}".format(v, minimizer, pos, size, end)
             n_superkmers+=1
@@ -35,26 +55,23 @@ def customize_kernel_template(X, k, m, r, kernel_template):
     ts = ((nm-1)//lsd) + 1
     nt2 = ((nm-1)//ts) + 1
     a_mask = (2**((2*m)-2)) - 1
-    params_template = {'read_size': str(r), 'second_mt': str(nt2), 'nt_max': str(max(nt2, nt3)), 'a_mask': str(a_mask)}
-    kernel_template = kernel_template.format(**params_template)
+    kernel_template = kernel_template.replace("READ_SIZE", str(r))\
+                    .replace("SECOND_MT", str(nt2)).replace("NT_MAX", str(max(nt2, nt3)))\
+                    .replace("A_MASK", str(a_mask))
     return kernel_template
 
-def getSuperK_M(input_file, output_path, r):
+def getSuperK_M(kmer, mmer, input_file, read_size, output_path):
     # Kernel parameters
     sys.stdout.write("Loading sequences from file {}\n".format(input_file))
-    h_R2M_G = file_to_matrix(input_file, r)
-    print h_R2M_G
+    h_R2M_G = file_to_matrix(input_file, int(read_size))
     nr = h_R2M_G.shape[0]
-    r = h_R2M_G.shape[1]
-    m = 7
-    k = 31
-    nmk = k - m + 1
+    nmk = kmer - mmer + 1
     X = nmk
     # OpenCL things
     contexto = cl.create_some_context()
     cola = cl.CommandQueue(contexto)
     codigo_kernel = open("kernels/getSuperK2_M.cl.tpl").read()
-    codigo_kernel = customize_kernel_template(X, k, m, r, codigo_kernel)
+    codigo_kernel = customize_kernel_template(X, kmer, mmer, read_size, codigo_kernel)
     programa = cl.Program(contexto, codigo_kernel).build()
     getSuperK_M = programa.getSuperK_M
     getSuperK_M.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32, np.uint32,np.uint32])
@@ -66,11 +83,11 @@ def getSuperK_M(input_file, output_path, r):
     rango_global = (X, nr)
     rango_local = (X, 1)
     # Output matrix
-    nm = r - m + 1;
-    h_counters = np.empty((nr,1)).astype(np.uint32)
+    nm = read_size - mmer + 1;
+    h_counters = np.empty((nr, 1)).astype(np.uint32)
     d_counters = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_counters.nbytes)
     # Execution
-    getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, nr, r, k, m)
+    getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, nr, read_size, kmer, mmer)
     cola.finish()
     sys.stdout.write("Execution finished, copying data from device to host memory\n")
     cl.enqueue_copy(cola, h_counters, d_counters)
@@ -80,18 +97,10 @@ def getSuperK_M(input_file, output_path, r):
     minimizer_matrix = cut_minimizer_matrix(h_R2M_G, h_counters)
     del(h_R2M_G)
     sys.stdout.write("Writing superkmers to disk\n")
-    extract_superkmers(minimizer_matrix, m=7)
-    # extract_superkmers(minimizer_matrix, input_file, output_path, m=m)
+    extract_superkmers(minimizer_matrix, input_file, output_path, m=mmer)
 
 if __name__ == "__main__":
-    """
-    Execution:
-    python getSuperK_M filename.fasta outputpath N
-    filename <- Fasta file with reads
-    outputpath <- Folder where the buckets will be placed (must exists)
-    N <- Read size (optional)
-    """
-    input_file = argv[1]
-    output_path = argv[2]
-    r = int(argv[3]) if argv[3] else None
-    getSuperK_M(input_file, output_path, r)
+    kmer, mmer, input_file, read_size, output_path = parse_arguments()
+    if not os.path.exists(output_path):
+        os.system('mkdir -p {}'.format(output_path))
+    getSuperK_M(kmer, mmer, input_file, read_size, output_path)
