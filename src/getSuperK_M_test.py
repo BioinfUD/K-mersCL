@@ -11,8 +11,8 @@ def extract_superkmers(minimizer_matrix, m=4):
     for row in minimizer_matrix:
         print "superkmers: {}".format(str(row))
         for v in row:
-            minimizer = (v & 0b11111111111100000000000000000000) >> 20
-            pos = (v & 0b00000000000011111111111100000000) >> 8
+            minimizer = (v & 0b11111111111111000000000000000000) >> 18
+            pos = (v & 0b00000000000000111111111100000000) >> 8
             size = v & 0b00000000000000000000000011111111
             end =  pos + size
             minimizer_str = str(minimizer)
@@ -52,7 +52,7 @@ def getSuperK_M(input_file, output_path, r):
     # Kernel parameters
     nr = h_R2M_G.shape[0]
     r = h_R2M_G.shape[1]
-    m = 4
+    m = 7
     k = 31
     # Execution parameters
     X = (((256/k)*k - 1)/32 + 1)*32

@@ -9,9 +9,9 @@ from utils.superkmer_utils import cut_minimizer_matrix, extract_superkmers
 
 
 def getSuperK_M(input_file, output_path, r):
+    # Kernel parameters
     sys.stdout.write("Loading sequences from file {}\n".format(input_file))
     h_R2M_G = file_to_matrix(input_file, r)
-    # Kernel parameters
     nr = h_R2M_G.shape[0]
     r = h_R2M_G.shape[1]
     m = 4
@@ -23,12 +23,13 @@ def getSuperK_M(input_file, output_path, r):
     rango_local = (X, 1)
     # Kernel replace parameters
     READ_SIZE = r
-    nmk = k - m + 1
-    nkr = r - k + 1
-    lsd = X // nmk
-    ts = ((nkr - 1) / lsd) + 1
+    nm = r - m + 1
+    lsd = X // m
+    ts = ((nm - 1) / lsd) + 1
     MMERS_IN_READ = r - m + 1
-    NUMBER_OF_TILES = ((nkr - 1)//ts) + 1
+    NUMBER_OF_TILES = ((nm-1)//ts) + 1
+    sys.stdout.write("READ_SIZE {}, MMERS_IN_READ{}, NUMBER_OF_TILES{}, nm{}, lsd{}, ts{}"
+        .format(READ_SIZE, MMERS_IN_READ, NUMBER_OF_TILES, nm, lsd, ts))
     # OpenCL things
     contexto = cl.create_some_context()
     cola = cl.CommandQueue(contexto)

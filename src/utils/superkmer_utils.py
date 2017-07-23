@@ -17,17 +17,17 @@ def extract_superkmers(minimizer_matrix, input_file_path, output_path, m=4):
     parser = SeqIO.parse(input_file_path, "fasta")
     output_files = {}
     n_superkmers = 0
+    for i in range(0, 4**m):
+        output_files[str(i)] = BufferedWriter(FileIO(output_path+"/"+str(i), "w"), buffer_size=5000000)
     for row in minimizer_matrix:
         record = parser.next()
         for v in row:
-            minimizer = (v & 0b11111111111100000000000000000000) >> 20
-            pos = (v & 0b00000000000011111111111100000000) >> 8
+            minimizer = (v & 0b11111111111111000000000000000000) >> 18
+            pos = (v & 0b00000000000000111111111100000000) >> 8
             size = v & 0b00000000000000000000000011111111
             end =  pos + size
             #print "Min {},  pos {}, size {}, end{}".format(minimizer, pos, size, end)
-            minimizer_str = str(minimizer)
-            if minimizer_str not in output_files:
-                output_files[minimizer_str] = BufferedWriter(FileIO(output_path+"/"+minimizer_str, "w"), buffer_size=5000000)
+            minimizer_str = str(minimizer) 
             output_files[minimizer_str].write(str(record.seq)[pos:end]+"\n")
             n_superkmers+=1
     for k,v in output_files.items():
