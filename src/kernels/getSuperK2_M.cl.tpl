@@ -15,11 +15,13 @@ __kernel void getSuperK_M(
    xl = get_local_id(0);
    yl = get_local_id(1);
 
-  __local uint RSK[READ_SIZE]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
+  __local uint RSK[{read_size}]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
 
-  __local uint RCMT[SECOND_MT]; // Position of minimizer in each tile, (nm-1)/(ts)   +  1, ts -> (nm-1)/lsd   + 1, nm=r-m-1, lsd=localSpaceSize/m
-  __local uint MT[NT_MAX]; // max(nt1, nt2) , max(nt anterior , nt nuevo)
+  __local uint RCMT[{second_mt}}]; // Position of minimizer in each tile, (nm-1)/(ts)   +  1, ts -> (nm-1)/lsd   + 1, nm=r-m-1, lsd=localSpaceSize/m
+  __local uint MT[{nt_max}}]; // max(nt1, nt2) , max(nt anterior , nt nuevo)
   __local uint counter, mp, nmp, minimizer; // minimizer position, new minimizer  position, minimizer
+   // Mask to use when compacting
+    a = {a_mask}; // Mask
 
    nmk = k - m + 1;
    // Global to local
@@ -42,8 +44,6 @@ __kernel void getSuperK_M(
     nm = r - m + 1; // nm: Number of m-mers per read
     ts = ((nm-1)/lsd) + 1; // ts: Tile size
     nt2 = ((nm-1)/ts) + 1 ; // nt: Number of tiles or number of sub-reads per read
-    // a = (int) (pow(((double) 2, (double) (2*m)) - 1); // Mask
-    a = A_MASK; // Mask
 
     if ((x < m*nt2) && (y<nr)) {
       // Cómputo en pllo del primer m-mer de cada tile
@@ -70,7 +70,7 @@ __kernel void getSuperK_M(
     }
     barrier(CLK_LOCAL_MEM_FENCE);
 
-      // Cómputo en serie del resto de m-mers de cada tile
+    // Cómputo en serie del resto de m-mers de cada tile
     if ((x<nt2) && (y<nr))	{
        idt = x;
        start = ts*idt;

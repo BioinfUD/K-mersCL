@@ -35,10 +35,8 @@ def customize_kernel_template(X, k, m, r, kernel_template):
     ts = ((nm-1)//lsd) + 1
     nt2 = ((nm-1)//ts) + 1
     a_mask = (2**((2*m)-2)) - 1
-    kernel_template = kernel_template.replace("READ_SIZE", str(r));
-    kernel_template = kernel_template.replace("SECOND_MT", str(nt2));
-    kernel_template = kernel_template.replace("NT_MAX", str(max(nt2, nt3)));
-    kernel_template = kernel_template.replace("A_MASK", str(a_mask));
+    params_template = {'read_size': str(r), 'second_mt': str(nt2), 'nt_max': str(max(nt2, nt3)), 'a_mask': str(a_mask)}
+    kernel_template = kernel_template.format(**params_template)
     return kernel_template
 
 def getSuperK_M(input_file, output_path, r):
