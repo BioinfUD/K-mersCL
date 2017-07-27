@@ -1,8 +1,11 @@
 import argparse
 import os
+from shutil import copyfile
 import subprocess
 import sys
 from utils.analyze_taken_metrics import merge_metrics
+
+from config import MSPK_PARTITION_PATH, TOTAL_CORES
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -47,7 +50,19 @@ def execute_kmercl(params):
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
 
+# We need to copy mspk since is not possible to configure the output path and handling cd and stuff will be harder
+def copyMSPK(params):
+    copy_path = os.path.join(params['output_path'], "output_files")
+    copyfile(os.path.join(MSPK_PARTITION_PATH, "Partition"), copy_path)
+    copyfile(os.path.join(MSPK_PARTITION_PATH, "guava-19.0.jar"), copy_path)
+
+
 def execute_mspk(params):
+    params['output_path'] = os.path.join(params['output_path'], "output_files")
+    params['n_cores'] = TOTAL_CORES
+    command = "cd {output_path} && java -cp guava-19.0.jar: Partition -in {input_file} -k {kmer} -L {read_size} -p {mmer} -t {n_cores} | ts %s, > {log_output_path}".format(**params)
+    sys.stdout.write("Executing '{}' \n".format(command))
+    subprocess.call(command, shell=True)
     pass
 
 def execute_sleep(seconds):
@@ -58,22 +73,28 @@ def execute_sleep(seconds):
 def execute_metrics_summary(full_output_path):
     path = os.path.join(full_output_path, "metrics")
     sys.stdout.write("Mergin metrics in {}".format(path))
-    merge_metrics(path, 4, "2017-07-23")
+    merge_metrics(path, TOTAL_CORES, "2017-07-23")
 
 def kill_processes(pids):
-    sys.stdout.write("Killing proccesses {}\n".format(pids))
+    sys.stdout.write("Killing metrics collection processes {}\n".format(pids))
     subprocess.call("killall -9 sar", shell=True)
     subprocess.call("killall -9 sar", shell=True)
     subprocess.call("killall -9 nvidia-smi", shell=True)
 
 def execute_assesment(kmer, mmer, input_file, read_size, output_path, method):
     params = {'mmer': mmer, 'input_file_name': input_file.split("/")[-1], 'kmer': kmer, 'output_path': output_path,
-              'read_size': read_size, 'input_file': input_file}
-    full_output_path = "{output_path}/k{kmer}-m{mmer}-r{read_size}-{input_file_name}/".format(**params)
+              'read_size': read_size, 'input_file': input_file, "method": method}
+    full_output_path = os.path.join(params['output_path'], "{method}-k{kmer}-m{mmer}-r{read_size}-{input_file_name}/".format(**params))
     # Rewrite for specific output
     params['output_path'] = full_output_path
     params['log_output_path'] = os.path.join(full_output_path, "metrics", "tool_log.csv")
+
+    # Copy this before metrics collection start
+    if method == "mspk":
+        copyMSPK(params)
+
     process_cpu, process_memio, process_nvidia = execute_metrics_collection(full_output_path)
+
     sys.stdout.write(" ***************************************** \n"\
               "Execution performance assesment \n"\
               "Output path {} \n"\
