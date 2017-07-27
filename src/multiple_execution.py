@@ -85,6 +85,7 @@ def execute_assesment(kmer, mmer, input_file, read_size, output_path, method):
     params = {'mmer': mmer, 'input_file_name': input_file.split("/")[-1], 'kmer': kmer, 'output_path': output_path,
               'read_size': read_size, 'input_file': input_file, "method": method}
     full_output_path = os.path.join(params['output_path'], "{method}-k{kmer}-m{mmer}-r{read_size}-{input_file_name}/".format(**params))
+    os.system('mkdir -p {}'.format(full_output_path))
     # Rewrite for specific output
     params['output_path'] = full_output_path
     params['log_output_path'] = os.path.join(full_output_path, "metrics", "tool_log.csv")
