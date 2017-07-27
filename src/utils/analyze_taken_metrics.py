@@ -77,7 +77,42 @@ def proces_memio_metrics(mem_io_file, str_date):
     return series_mem, series_read, series_written
 
 def process_gpu_metrics(gpu_file):
-    pass
+    with open(gpu_file, "r") as file_gpu:
+        gpu_dates = []
+        gpu_mem_used = []
+        file_gpu.readline() # Skip header line
+        while True:
+            line = file_gpu.readline().strip()
+            if not line or line == "" : break
+            line_data = line.split(",")
+            try:
+                used_mem = float(line_data[-1].replace("MiB", ""))
+            except:
+                continue
+            timestamp = int(line_data[0])
+            gpu_dates.append(datetime.datetime.fromtimestamp(timestamp))
+            gpu_mem_used.append(used_mem)
+    series_gpu = pd.Series(gpu_mem_used, gpu_dates)
+    return series_gpu
+
+def process_log_file(log_file):
+    line_logs = []
+    logs_dates = []
+    line_log = ""
+    with open(log_file, "r") as file_log:
+        while True:
+            line = file_log.readline().strip()
+            if not line or line == "" : break
+            line_data = line.split(",", 1)
+            timestamp = int(line_data[0])
+            line_log = line_data[1]
+            log_date = datetime.datetime.fromtimestamp(timestamp)
+            logs_dates.append(log_date)
+            line_logs.append(line_log)
+    series_logs = pd.Series(line_log, logs_dates)
+    series_logs = series_logs.groupby(series_logs.index).apply(lambda x: x.sum())
+    return series_logs
+
 
 def merge_metrics(input_path, n_cores, str_date):
     cpu_metrics_file = os.path.join(input_path, "sar_cpu_file.log")
@@ -87,11 +122,14 @@ def merge_metrics(input_path, n_cores, str_date):
     series_mem, series_read, series_written = proces_memio_metrics(mem_io_file, str_date)
 
     gpu_file = os.path.join(input_path, "nvidia_gpu.log")
-    process_gpu_metrics(gpu_file)
+    series_gpu = process_gpu_metrics(gpu_file)
+
+    log_file = os.path.join(input_path, "tool_log.csv")
+    series_log = process_log_file(log_file)
 
     # Join series
-    df = pd.concat([series_cpu, series_mem, series_read, series_written], axis=1)
-    df.columns =["CPU", "MEM", "READ", "WRITE"]
+    df = pd.concat([series_cpu, series_mem, series_read, series_written, series_gpu, series_log], axis=1)
+    df.columns =["CPU", "MEM", "READ", "WRITE", "GPU", "LOG"]
 
     # Output file
     merged_xlsx_file = os.path.join(input_path, "merged_metrics.xlsx")
@@ -102,5 +140,3 @@ def merge_metrics(input_path, n_cores, str_date):
 if __name__ == "__main__":
     input_path, n_cores, str_date = parse_arguments()
     merge_metrics(input_path, n_cores, str_date)
-
-

@@ -3,6 +3,7 @@ import pyopencl as cl
 import sys
 import argparse
 import os
+import time
 
 from utils.read_conversion import file_to_matrix
 from utils.superkmer_utils import cut_minimizer_matrix, extract_superkmers
@@ -27,6 +28,7 @@ def parse_arguments():
     output_path = args.output_path
     return int(kmer), int(mmer), input_file, int(read_size), output_path
 
+"""
 def extract_superkmers(minimizer_matrix, input_file, output_path, m=4):
     n_superkmers = 0
     for row in minimizer_matrix:
@@ -40,6 +42,7 @@ def extract_superkmers(minimizer_matrix, input_file, output_path, m=4):
             print "Valor {} Min {},  ini {}, size {}, end{}".format(v, minimizer, pos, size, end)
             n_superkmers+=1
     return n_superkmers
+"""
 
 def customize_kernel_template(X, k, m, r, kernel_template):
     if (k <= 36):
@@ -87,9 +90,10 @@ def getSuperK_M(kmer, mmer, input_file, read_size, output_path):
     h_counters = np.empty((nr, 1)).astype(np.uint32)
     d_counters = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_counters.nbytes)
     # Execution
+    t1 = time.time()
     getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, nr, read_size, kmer, mmer)
     cola.finish()
-    sys.stdout.write("Execution finished, copying data from device to host memory\n")
+    sys.stdout.write("Kernel execution took {}, copying data from device to host memory\n".format(time.time() - t1))
     cl.enqueue_copy(cola, h_counters, d_counters)
     cl.enqueue_copy(cola, h_R2M_G, d_R2M_G)
     # Cut the output matrix based on counters
