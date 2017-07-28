@@ -46,7 +46,7 @@ def execute_metrics_collection(full_output_path):
 def execute_kmercl(params):
     # Sync
     params['output_path'] = "{output_path}/output_files".format(**params)
-    command = "python2 getSuperK2_M.py --kmer {kmer} --mmer {mmer} --input_file {input_file} --read_size {read_size} --output_path {output_path} | ts %s, > {log_output_path}".format(**params)
+    command = "python2 -u getSuperK2_M.py --kmer {kmer} --mmer {mmer} --input_file {input_file} --read_size {read_size} --output_path {output_path} | ts %s, > {log_output_path}".format(**params)
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
 
@@ -119,7 +119,9 @@ def main():
     for kmer in kmers:
         for mmer in mmers:
             for idx, input_file in enumerate(input_files):
-                execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method)
-
+                try:
+                    execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method)
+                except Exception as e:
+                     sys.stdout.write("ERROR WITH {}".format([kmer, mmer, input_file, read_sizes[idx], output_path, method]))
 if __name__ == '__main__':
     main()
