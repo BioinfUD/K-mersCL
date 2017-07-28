@@ -123,9 +123,11 @@ def merge_metrics(input_path, n_cores, str_date):
 
     gpu_file = os.path.join(input_path, "nvidia_gpu.log")
     series_gpu = process_gpu_metrics(gpu_file)
-
-    log_file = os.path.join(input_path, "tool_log.csv")
-    series_log = process_log_file(log_file)
+    try:
+        log_file = os.path.join(input_path, "tool_log.csv")
+        series_log = process_log_file(log_file)
+    except:
+        series_log = pd.Series()
 
     # Join series
     df = pd.concat([series_cpu, series_mem, series_read, series_written, series_gpu, series_log], axis=1)

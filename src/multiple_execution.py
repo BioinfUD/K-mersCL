@@ -5,6 +5,7 @@ import subprocess
 import sys
 from utils.analyze_taken_metrics import merge_metrics
 
+import config
 from config import MSPK_PARTITION_PATH, TOTAL_CORES
 
 def parse_arguments():
@@ -37,7 +38,10 @@ def execute_metrics_collection(full_output_path):
         os.system('mkdir -p {}'.format(path))
     cpu_command = "sar -P ALL 1 99999 > {}/sar_cpu_file.log".format(path)
     memio_command = "sar -b -r 1 99999 > {}/sar_mem_io_file.log".format(path)
-    nvidia_command = "nvidia-smi --query-gpu=utilization.gpu,utilization.memory,memory.total,memory.free,memory.used --format=csv -l 1 | ts %s, >> {}/nvidia_gpu.log ".format(path)
+    base_command = "nvidia-smi --query-gpu=utilization.gpu,utilization.memory,memory.total,memory.free,memory.used --format=csv -l 1"
+    if hasattr('SPECIFIC_GPU', config):
+        base_command += " -i {}".format(config.SPECIFIC_GPU)
+    nvidia_command = "{} | ts %s, >> {}/nvidia_gpu.log ".format(base_command, path)
     process_cpu = subprocess.Popen("LC_TIME='C' exec " + cpu_command, shell=True)
     process_memio = subprocess.Popen("LC_TIME='C' exec " +memio_command, shell=True)
     process_nvidia = subprocess.Popen("LC_TIME='C' exec " +nvidia_command, shell=True)
@@ -122,6 +126,7 @@ def main():
                 try:
                     execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method)
                 except Exception as e:
-                     sys.stdout.write("ERROR WITH {}".format([kmer, mmer, input_file, read_sizes[idx], output_path, method]))
+                     sys.stdout.write("Exception {} generated with parameters {} \n".format(str(e), [kmer, mmer, input_file, read_sizes[idx], output_path, method]))
+
 if __name__ == '__main__':
     main()
