@@ -20,13 +20,15 @@ def parse_arguments():
                         help="Read size of each file specified on --input_files option")
     parser.add_argument('--output_path', dest="output_path", default="output_superkmers",
                         help="Folder where the stats and output will be stored")
+    parser.add_argument('--n_reads', dest="n_reads", default=None, help="Number of reads in each file (Comma separated values). If not specified this will be estimated")
     args = parser.parse_args()
     kmer = args.kmer
     mmer = args.mmer
     input_file = args.input_file
     read_size = args.read_size
     output_path = args.output_path
-    return int(kmer), int(mmer), input_file, int(read_size), output_path
+    n_reads = args.n_reads
+    return int(kmer), int(mmer), input_file, int(read_size), int(n_reads), output_path
 
 """
 def extract_superkmers(minimizer_matrix, input_file, output_path, m=4):
@@ -63,10 +65,10 @@ def customize_kernel_template(X, k, m, r, kernel_template):
                     .replace("A_MASK", str(a_mask))
     return kernel_template
 
-def getSuperK_M(kmer, mmer, input_file, read_size, output_path):
+def getSuperK_M(kmer, mmer, input_file, read_size, n_reads, output_path):
     # Kernel parameters
     sys.stdout.write("Loading sequences from file {}\n".format(input_file))
-    h_R2M_G = file_to_matrix(input_file, int(read_size))
+    h_R2M_G = file_to_matrix(input_file, int(read_size), n_reads)
     nr = h_R2M_G.shape[0]
     nmk = kmer - mmer + 1
     X = nmk
@@ -105,7 +107,7 @@ def getSuperK_M(kmer, mmer, input_file, read_size, output_path):
     sys.stdout.write("Done execution\n")
 
 if __name__ == "__main__":
-    kmer, mmer, input_file, read_size, output_path = parse_arguments()
+    kmer, mmer, input_file, read_size, n_reads, output_path = parse_arguments()
     if not os.path.exists(output_path):
         os.system('mkdir -p {}'.format(output_path))
-    getSuperK_M(kmer, mmer, input_file, read_size, output_path)
+    getSuperK_M(kmer, mmer, input_file, read_size, n_reads, output_path)

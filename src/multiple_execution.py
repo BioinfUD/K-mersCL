@@ -21,6 +21,7 @@ def parse_arguments():
     parser.add_argument('--output_path', dest="output_path", default="output_superkmers",
                         help="Folder where the stats and output will be stored")
     parser.add_argument('--method', dest="method", default="kmerscl", help="Which method will be used to process reads (mspk or kmerscl)")
+    parser.add_argument('--n_reads', dest="n_reads", default=None, help="Number of reads in each file (Comma separated values). If not specified this will be estimated")
     args = parser.parse_args()
     kmers = args.kmers.split(",")
     mmers = args.mmers.split(",")
@@ -28,8 +29,9 @@ def parse_arguments():
     read_sizes = args.read_sizes.split(",")
     output_path = args.output_path
     method = args.method
+    n_reads = args.n_reads.split(",")
     assert (len(input_files) == len(read_sizes), "Read sizes options are not of the same lenght of input_files options")
-    return kmers, mmers, input_files, read_sizes, output_path, method
+    return kmers, mmers, input_files, read_sizes, output_path, method, n_reads
 
 def execute_metrics_collection(full_output_path):
     # This should be async
@@ -50,7 +52,10 @@ def execute_metrics_collection(full_output_path):
 def execute_kmercl(params):
     # Sync
     params['output_path'] = "{output_path}/output_files".format(**params)
-    command = "python2 -u getSuperK2_M.py --kmer {kmer} --mmer {mmer} --input_file {input_file} --read_size {read_size} --output_path {output_path} | ts %s, > {log_output_path}".format(**params)
+    command = "python2 -u getSuperK2_M.py --kmer {kmer} --mmer {mmer} --input_file {input_file} --read_size {read_size} --output_path {output_path}".format(**params)
+    if params['n_reads']:
+        command += " --n_reads {}".format(params['n_reads'])
+    command += " | ts %s, > {log_output_path}".format(**params)
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
 
@@ -86,9 +91,9 @@ def kill_processes(pids):
     subprocess.call("killall -9 nvidia-smi", shell=True)
     subprocess.call("sudo sh /tmp/clear_mem.sh", shell=True)
 
-def execute_assesment(kmer, mmer, input_file, read_size, output_path, method):
+def execute_assesment(kmer, mmer, input_file, read_size, output_path, method, n_reads):
     params = {'mmer': mmer, 'input_file_name': input_file.split("/")[-1], 'kmer': kmer, 'output_path': output_path,
-              'read_size': read_size, 'input_file': input_file, "method": method}
+              'read_size': read_size, 'input_file': input_file, "method": method, "n_reads": n_reads}
     full_output_path = os.path.join(params['output_path'], "{method}-k{kmer}-m{mmer}-r{read_size}-{input_file_name}/".format(**params))
     os.system('mkdir -p {}'.format(full_output_path))
     # Rewrite for specific output
@@ -120,12 +125,16 @@ def execute_assesment(kmer, mmer, input_file, read_size, output_path, method):
     execute_metrics_summary(full_output_path)
 
 def main():
-    kmers, mmers, input_files, read_sizes, output_path, method = parse_arguments()
+    kmers, mmers, input_files, read_sizes, output_path, method, n_reads = parse_arguments()
     for kmer in kmers:
         for mmer in mmers:
             for idx, input_file in enumerate(input_files):
                 try:
-                    execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method)
+                    n_read = n_reads[idx]
+                except IndexError:
+                    n_read = None
+                try:
+                    execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method, n_read)
                 except Exception as e:
                      sys.stdout.write("Exception {} generated with parameters {} \n".format(str(e), [kmer, mmer, input_file, read_sizes[idx], output_path, method]))
 
