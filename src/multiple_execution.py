@@ -6,7 +6,7 @@ import sys
 from utils.analyze_taken_metrics import merge_metrics
 
 import config
-from config import MSPK_PARTITION_PATH, TOTAL_CORES
+from config import MSPK_PARTITION_PATH, MSPK_THREADS, TOTAL_CORES
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -70,7 +70,7 @@ def copyMSPK(params):
 
 def execute_mspk(params):
     params['output_path'] = os.path.join(params['output_path'])
-    params['n_cores'] = TOTAL_CORES
+    params['n_cores'] = MSPK_THREADS
     command = "cd {output_path} && java -cp guava-19.0.jar: Partition -in {input_file} -k {kmer} -L {read_size} -p {mmer} -t {n_cores} | ts %s, > {log_output_path}".format(**params)
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
