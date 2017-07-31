@@ -61,13 +61,15 @@ def execute_kmercl(params):
 
 # We need to copy mspk since is not possible to configure the output path and handling cd and stuff will be harder
 def copyMSPK(params):
-    copy_path = os.path.join(params['output_path'], "output_files")
-    copyfile(os.path.join(MSPK_PARTITION_PATH, "Partition"), copy_path)
-    copyfile(os.path.join(MSPK_PARTITION_PATH, "guava-19.0.jar"), copy_path)
+    print "Copying mspk to: {}".format(params['output_path'])
+    copy_path = params['output_path']
+    copyfile(os.path.join(MSPK_PARTITION_PATH, "Partition.class"), copy_path + "Partition.class")
+    copyfile(os.path.join(MSPK_PARTITION_PATH, "Partition$MyThreadStep1.class"), copy_path +"Partition$MyThreadStep1.class")
+    copyfile(os.path.join(MSPK_PARTITION_PATH, "guava-19.0.jar"), copy_path + "guava-19.0.jar")
 
 
 def execute_mspk(params):
-    params['output_path'] = os.path.join(params['output_path'], "output_files")
+    params['output_path'] = os.path.join(params['output_path'])
     params['n_cores'] = TOTAL_CORES
     command = "cd {output_path} && java -cp guava-19.0.jar: Partition -in {input_file} -k {kmer} -L {read_size} -p {mmer} -t {n_cores} | ts %s, > {log_output_path}".format(**params)
     sys.stdout.write("Executing '{}' \n".format(command))
@@ -95,6 +97,7 @@ def execute_assesment(kmer, mmer, input_file, read_size, output_path, method, n_
     params = {'mmer': mmer, 'input_file_name': input_file.split("/")[-1], 'kmer': kmer, 'output_path': output_path,
               'read_size': read_size, 'input_file': input_file, "method": method, "n_reads": n_reads}
     full_output_path = os.path.join(params['output_path'], "{method}-k{kmer}-m{mmer}-r{read_size}-{input_file_name}/".format(**params))
+    print full_output_path
     os.system('mkdir -p {}'.format(full_output_path))
     # Rewrite for specific output
     params['output_path'] = full_output_path
