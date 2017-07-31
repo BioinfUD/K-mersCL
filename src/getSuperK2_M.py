@@ -97,11 +97,12 @@ def getSuperK_M(kmer, mmer, input_file, read_size, output_path):
     cl.enqueue_copy(cola, h_counters, d_counters)
     cl.enqueue_copy(cola, h_R2M_G, d_R2M_G)
     # Cut the output matrix based on counters
-    sys.stdout.write("Cutting the matrix based on available superkmers\n")
+    sys.stdout.write("Copy Done, cutting the matrix based on available superkmers\n")
     minimizer_matrix = cut_minimizer_matrix(h_R2M_G, h_counters)
     del(h_R2M_G)
     sys.stdout.write("Writing superkmers to disk\n")
     extract_superkmers(minimizer_matrix, input_file, output_path, m=mmer)
+    sys.stdout.write("Done execution\n")
 
 if __name__ == "__main__":
     kmer, mmer, input_file, read_size, output_path = parse_arguments()

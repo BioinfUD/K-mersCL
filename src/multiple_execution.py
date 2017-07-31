@@ -39,7 +39,7 @@ def execute_metrics_collection(full_output_path):
     cpu_command = "sar -P ALL 1 99999 > {}/sar_cpu_file.log".format(path)
     memio_command = "sar -b -r 1 99999 > {}/sar_mem_io_file.log".format(path)
     base_command = "nvidia-smi --query-gpu=utilization.gpu,utilization.memory,memory.total,memory.free,memory.used --format=csv -l 1"
-    if hasattr('SPECIFIC_GPU', config):
+    if hasattr(config, 'SPECIFIC_GPU'):
         base_command += " -i {}".format(config.SPECIFIC_GPU)
     nvidia_command = "{} | ts %s, >> {}/nvidia_gpu.log ".format(base_command, path)
     process_cpu = subprocess.Popen("LC_TIME='C' exec " + cpu_command, shell=True)
@@ -84,6 +84,7 @@ def kill_processes(pids):
     subprocess.call("killall -9 sar", shell=True)
     subprocess.call("killall -9 sar", shell=True)
     subprocess.call("killall -9 nvidia-smi", shell=True)
+    subprocess.call("sudo sh /tmp/clear_mem.sh", shell=True)
 
 def execute_assesment(kmer, mmer, input_file, read_size, output_path, method):
     params = {'mmer': mmer, 'input_file_name': input_file.split("/")[-1], 'kmer': kmer, 'output_path': output_path,
