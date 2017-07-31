@@ -20,7 +20,7 @@ def parse_arguments():
                         help="Read size of each file specified on --input_files option")
     parser.add_argument('--output_path', dest="output_path", default="output_superkmers",
                         help="Folder where the stats and output will be stored")
-    parser.add_argument('--method', dest="method", default="kmerscl", help="Which method will be used to process reads (mspk or kmerscl)")
+    parser.add_argument('--methods', dest="methods", default="kmerscl", help="Which method will be used to process reads (mspk or kmerscl), (comma separated for multiple)")
     parser.add_argument('--n_reads', dest="n_reads", default=None, help="Number of reads in each file (Comma separated values). If not specified this will be estimated")
     args = parser.parse_args()
     kmers = args.kmers.split(",")
@@ -28,10 +28,10 @@ def parse_arguments():
     input_files = args.input_files.split(",")
     read_sizes = args.read_sizes.split(",")
     output_path = args.output_path
-    method = args.method
+    methods = args.methods.split(",")
     n_reads = args.n_reads.split(",")
     assert (len(input_files) == len(read_sizes), "Read sizes options are not of the same lenght of input_files options")
-    return kmers, mmers, input_files, read_sizes, output_path, method, n_reads
+    return kmers, mmers, input_files, read_sizes, output_path, methods, n_reads
 
 def execute_metrics_collection(full_output_path):
     # This should be async
@@ -128,18 +128,19 @@ def execute_assesment(kmer, mmer, input_file, read_size, output_path, method, n_
     execute_metrics_summary(full_output_path)
 
 def main():
-    kmers, mmers, input_files, read_sizes, output_path, method, n_reads = parse_arguments()
+    kmers, mmers, input_files, read_sizes, output_path, methods, n_reads = parse_arguments()
     for kmer in kmers:
         for mmer in mmers:
-            for idx, input_file in enumerate(input_files):
-                try:
-                    n_read = n_reads[idx]
-                except IndexError:
-                    n_read = None
-                try:
-                    execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method, n_read)
-                except Exception as e:
-                     sys.stdout.write("Exception {} generated with parameters {} \n".format(str(e), [kmer, mmer, input_file, read_sizes[idx], output_path, method]))
+            for method in methods:
+                for idx, input_file in enumerate(input_files):
+                    try:
+                        n_read = n_reads[idx]
+                    except IndexError:
+                        n_read = None
+                    try:
+                        execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method, n_read)
+                    except Exception as e:
+                         sys.stdout.write("Exception {} generated with parameters {} \n".format(str(e), [kmer, mmer, input_file, read_sizes[idx], output_path, method]))
 
 if __name__ == '__main__':
     main()
