@@ -1,13 +1,16 @@
+// All divisions used here are integer division
+// Variables inside a kernel not declared with an address space qualifier are considered Private
+
 __kernel void getSuperK_M(
-   __global uint* RSK_G, // Matrix of reads
+   __global uint* RSK_G, // Vector of reads and super k-mers (32 bits)
    __global uint* counters, // Matrix of temporal output
    const unsigned int nr, // Number of reads
    const unsigned int r, // Read size
-   const unsigned int k, // Kmer size
+   const unsigned int k, // K-mer size
    const unsigned int m // m-mer size
    )
 {
-   uint x, y, yl, xl, p, start, offset, nmk, nm, min, a, b, c, d, idt, ts, nt, lsd, nkr, tmp, ls, start_tile, start_superk, nt1, nt2, nt3, nt4 = 0;
+   uint x, y, yl, xl, p, start, offset, nmk, nm, min, a, b, c, d, idt, ts, nt, lsd, nkr, tmp, ls, start_zone, start_superk, nt1, nt2, nt3, nt4 = 0;
    bool flag;
 
    x = get_global_id(0);
@@ -15,18 +18,22 @@ __kernel void getSuperK_M(
    xl = get_local_id(0);
    yl = get_local_id(1);
 
-  __local uint RSK[READ_SIZE]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
+   __local uint RSK[READ_SIZE]; // Vector to store reads, m-mers and superk-mers. This vector is overwritten in each stage, size: length of the read
+   __local uint RCMT[SECOND_MT]; // Reverse complement of current m-mer of tile (32 bits), size: nt2
+   __local uint MT[NT_MAX]; // Current m-mer of tile (32 bits), size: Greater between nt2 and nt3
+   __local uint counter; // Number of super k-mers found (32 bits)
+   __local uint mp; //Current canonical minimizer or signature position
+   __local uint nmp; //New minimizer position.
+   __local uint minimizer;  // Current canonical minimizer or signature
 
-  __local uint RCMT[SECOND_MT]; // Position of minimizer in each tile, (nm-1)/(ts)   +  1, ts -> (nm-1)/lsd   + 1, nm=r-m-1, lsd=localSpaceSize/m
-  __local uint MT[NT_MAX]; // max(nt1, nt2) , max(nt anterior , nt nuevo)
-  __local uint counter, mp, nmp, minimizer; // minimizer position, new minimizer  position, minimizer
-   // Mask to use when compacting
-    a = A_MASK; // Mask
+   nmk = k - m + 1;  //Number of m-mers per k-mers
 
-   nmk = k - m + 1;
-   // Global to local
-   ts = get_local_size(0);
-   nt1 = (r-1)/ts + 1; // nt: Number of tiles or number of sub-reads per read
+   // PROCESS: Global to local
+   // Reads in global memory to Read in local memory
+
+   ts = get_local_size(0); // ts: Tile size, work group size
+   nt1 = (r-1)/ts + 1; // nt1: Number of tiles for this process
+
    if ((x<ts) && (x<r) && (y<nr)){
       for (int i=0; i<nt1; i++) { // coalesced
         p=ts*i+x;
@@ -38,31 +45,37 @@ __kernel void getSuperK_M(
     }
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    // FUNCTION: GetM-mers
-    // Read to decimal representation of m-mers
-    lsd = get_local_size(0) / m;
-    nm = r - m + 1; // nm: Number of m-mers per read
-    ts = ((nm-1)/lsd) + 1; // ts: Tile size
-    nt2 = ((nm-1)/ts) + 1 ; // nt: Number of tiles or number of sub-reads per read
+    // PROCESS: getCm-mers
+    // Reads to decimal representation of Canonical M-mers
 
+    lsd = get_local_size(0) / m; // lsd: Local space divisions
+    nm = r - m + 1; // nm: Number of m-mers per read
+    ts = ((nm-1)/lsd) + 1;  // Tile size for this process
+    nt2 = ((nm-1)/ts) + 1 ; // Number of tiles or number of sub-reads per read
+    a = A_MASK; // a:Mask (Sample: 63 for m = 4, to cancel all bits different to first 6)
+
+    // Parallel computing of the first m-mer of each tile
     if ((x < m*nt2) && (y<nr)) {
-      // Cómputo en pllo del primer m-mer de cada tile
-      idt = x/m;
-      start = ts*idt;
+      idt = x/m;  // Tile id
+      start = ts*idt; // Position of the first base for each tile
       offset = x % m;
-      p = (start) + (offset);
-      MT[idt] = 0;
-      RCMT[idt] = 0;
-      b = RSK[p];
-      atomic_or(&MT[idt], (b << (m-(x%m)-1)*2));
-      atomic_or(&RCMT[idt], (((~b) & 3) << (x%m)*2));
+      p = (start) + (offset);  // Position of the base corresponding a the thread
+      MT[idt] = 0; // MT Reset
+      RCMT[idt] = 0; // RCMT Reset
+      b = RSK[p]; // Each thread copies its base to b
+      atomic_or(&MT[idt], (b << (m-(x%m)-1)*2)); //Calculating the first m-mer of each tile
+      atomic_or(&RCMT[idt], (((~b) & 3) << (x%m)*2)); //Calculating the reverse complement of the first m-mer of each tile
     }
+
     barrier(CLK_LOCAL_MEM_FENCE);
 
     if ((x<nt2) && (y<nr)) {
       idt = x;
       start = ts*idt;
-      if (MT[idt]<RCMT[idt]){
+      if (MT[idt] < RCMT[idt]) // Finding the first canonical m-mer
+      /* The canonical m-mers of a read are saved in the same vector where the read was stored (RSK)
+         Each canonical m-mer is saved in the position where was its last base (This avoid the over-write of bases that Will be used by another tile) */
+      {
         RSK[start + m -1] = MT[idt];
       } else {
       	RSK[start + m -1] = RCMT[idt];
@@ -70,32 +83,38 @@ __kernel void getSuperK_M(
     }
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    // Cómputo en serie del resto de m-mers de cada tile
+    // Serial computation of the m-mers remaining of each tile
     if ((x<nt2) && (y<nr))	{
-       idt = x;
-       start = ts*idt;
-       c = MT[idt]; // Almacena en C el valor decimal del primer m-mer del tile
-       d = RCMT[idt];
+       idt = x; // Tile id
+       start = ts*idt; // Position of the first base for each tile
+       c = MT[idt]; // Copy to c the decimal value of the first m-mer of each tile
+       d = RCMT[idt]; // Copy to d the decimal value of the reverse complement of the first m-mer of each tile
 
        for (int z=0; z<(ts-1); z++) {
        		if (start+m+z > r-1) {
             break;
           }
-           b = RSK[start+m+z]; // Obtiene la siguiente base
-           c = ((c & a) << 2)|b; // Obtiene el valor decimal del m-mer (A partir del resultado   // anterior y la nueva base)
-           d = ((d>>2) & (a)) | (((~b) & 3)<<((m-1)*2));
-           if (c<d)	{
+           b = RSK[start+m+z]; // Copy to b the last base of the m-mer that will be calculated (current m-mer)
+           c = ((c & a) << 2)|b; // Calculating the current m-mer from the previous m-mer and the new base read (b)
+           d = ((d>>2) & (a)) | (((~b) & 3)<<((m-1)*2)); // Calculating the reverse complement of the current m-mer from the reverse complement of the previous m-mer and the new base read (b)
+           if (c<d)	// Finding the canonical m-mer
+           {
              RSK[start+m+z]=c;
             } else {
              RSK[start+m+z]=d;
             }
-           }
-      }
+       }
+    }
 
-      barrier(CLK_LOCAL_MEM_FENCE);
+    barrier(CLK_LOCAL_MEM_FENCE);
 
-      nt = ((nm-1)/ts) + 1; // nt: Number of tiles or number of sub-reads per read
 
+
+   // PROCESS: getSuperks
+   // Canonical m-mers to minimizers
+
+
+    nt = ((nm-1)/ts) + 1; // Variables counter, mp, nmp and minimizer are set
 
    /* Initialization */
    if (x==0) {
@@ -107,8 +126,10 @@ __kernel void getSuperK_M(
 
   barrier(CLK_LOCAL_MEM_FENCE);
 
-  start_tile = 0;
+  start_zone = 0;
   start_superk = 0;
+
+  // Choosing the tile size for the reduction algorithm used in this process
   if (k <= 36) {
     nt3 = 6;
   } else if (k <= 64) {
@@ -119,13 +140,21 @@ __kernel void getSuperK_M(
     nt3 = 12;
   }
 
+  // Evaluating the first k-mers of each read
+
+  /* To find the minimizer of the first k-mers of each reading a two-stage atomic reduction methodology is used:
+   * - First, the canonical m-mers of the k-mer are grouped into a number of sets equal to nt3; for each set an
+   *  atomic operation is performed to find the minimum canonical m-mer of each set.
+   * - Secondly, the minimums found in the previous step are reduced to one minimum, which is the minimizer of the k-mer. */
+
+
   if (x<nmk) {
     p = x;
-    b = RSK[p+m-1];
+    b = RSK[p+m-1]; // Each thread copies its canonical m-mer to b
   }
 
   if (x < nt3){
-    MT[x] = b;
+    MT[x] = b; // The first “nt3” canonical m-mers are copied to MT
   }
 
   barrier(CLK_LOCAL_MEM_FENCE);
@@ -149,26 +178,32 @@ __kernel void getSuperK_M(
 
   barrier(CLK_LOCAL_MEM_FENCE);
 
-  // The reamaining k-mers
-  while ((start_tile+nmk-1)<(nm-1)) {
-    flag = false;
-    if ((x<nmk) && (mp == start_tile)){
+  // Processing the remaining k-mers
+  while ((start_zone+nmk-1)<(nm-1)) {
+    flag = false; // Flag to indicate if the position of the current minimizer is equal to start_zone (Start of the last k-mer evaluated)
+    // If the position of the current minimizer is equal to start_zone, the flag is set to true and start_zone is incremented by one
+    if ((x<nmk) && (mp == start_zone)){
       flag = true;
-      start_tile = start_tile + 1;
-      if (p < start_tile) {
+      start_zone = start_zone + 1;
+      if (p < start_zone) {
         p = p + nmk;
         b = RSK[p + m - 1];
       }
     }
 
+    /* If the flag is true it means that the current minimizer is no longer part of the next k-mer to evaluate, as consequence
+     * there ends a super k-mer. The code below is to store the representation of the super k-mer in the vector RSK,
+     * additionally counter is incremented and star_superk and minimizer are set. */
     if ( (x==0) && flag ) {
-      a = (start_tile + k - 1 - start_superk) & 0x000000FF;
+      a = (start_zone + k - 1 - start_superk) & 0x000000FF;
       RSK[counter] = ((minimizer<<18) & 0xFFFC0000) | ((start_superk<<8) & 0x0003FF00) | a;
       counter++;
-      start_superk  = start_tile;
+      start_superk  = start_zone;
       minimizer = 0xFFFFFFFF;
     }
 
+    /* If the flag is true, the next k-mer to evaluate does not have minimizer of reference, therefore this k-mer
+     * is evaluated in the same way as the first k-mer.*/
     if ((x<nt3) && (flag)) {
       MT[x] = b;
     }
@@ -193,9 +228,16 @@ __kernel void getSuperK_M(
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
+    /* If the flag is false it means that the current minimizer is in a different position to the start of the last k-mer evaluated,
+     * therefore it is possible that the following k-mers share the same minimizer
+     *
+     * From all the next k-mers that have the possibility to share the same minimizer only the last one is evaluated: its canonical
+     * m-mers (different to the first) are compared with the current minimizer (its first canonical m-mer), if there are canonical
+     * m-mers lower than the current minimizer, the new minimizer will be the one with the lowest position. */
+
     if ((x<nmk) && flag==false) {
-      start_tile = mp;
-      if (p<start_tile) {
+      start_zone = mp;
+      if (p<start_zone) {
         p = p + nmk;
         if ( p < (nm -1)) {
           b = RSK[p+m-1];
@@ -207,6 +249,9 @@ __kernel void getSuperK_M(
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
+
+    /* If a new minimizer is found, it means that a super k-mer ends. The code below is to stor the representation of the
+     * super k-mer in the vector RSK, additionally counter is incremented and star_superk, minimizer, mp and nmp are set. */
 
     if ((x==0) && (flag==false) && (nmp != 0xFFFFFFFF)) {
       a = (nmp - start_superk + m - 1) & 0x000000FF;
@@ -222,6 +267,8 @@ __kernel void getSuperK_M(
 
   }
 
+  /* When each read is fully evaluated, it is necessary to store the representation of last super k-mer in the vector RSK */
+
   if (x==0) {
     a = (nm - start_superk + m - 1) & 0x000000FF;
     RSK[counter] = ((minimizer << 18) & 0xFFFC0000) | ((start_superk<<8) & 0x0003FF00) | a;
@@ -230,25 +277,25 @@ __kernel void getSuperK_M(
 
   barrier(CLK_LOCAL_MEM_FENCE);
 
-    //FUNCTION: Local2Global
-    //Reads in local memory to Read in global memory
-    ts = get_local_size(0);  // ts: Tile size, work group size
-    nt4 = (r-1)/ts + 1; // nt: Number of tiles
+  // PROCESS: local2Global
+  // Results in local memory to Results in global memory
+  ts = get_local_size(0);  // ts: Tile size, work group size
+  nt4 = (r-1)/ts + 1; // nt: Number of tiles
 
-    if ((x<ts) && (x<counter) && (y<nr)) {
-      for (int i=0; i<nt4; i++){  // coalesced
-        p=ts*i+x;
-        if (p > counter-1)
-          {
-            break;
-          }
-        RSK_G[y*r+p] = RSK[p];
+  if ((x<ts) && (x<counter) && (y<nr)) {
+    for (int i=0; i<nt4; i++){  // coalesced
+      p=ts*i+x;
+      if (p > counter-1)
+      {
+        break;
       }
+      RSK_G[y*r+p] = RSK[p];
     }
+  }
 
-   // Extract counters
-    if ((x == 0) && (y<nr))
-     {
-             counters[y] = counter;
-      }
+  // Extract counters to global mem
+  if ((x == 0) && (y<nr))
+  {
+    counters[y] = counter;
+  }
 }

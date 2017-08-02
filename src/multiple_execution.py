@@ -28,8 +28,8 @@ def parse_arguments():
     input_files = args.input_files.split(",")
     read_sizes = args.read_sizes.split(",")
     output_path = args.output_path
-    methods = args.methods.split(",")
-    n_reads = args.n_reads.split(",")
+    methods = ["kmerscl"] if not args.methods else args.methods.split(",")
+    n_reads = None if not args.n_reads else args.n_reads.split(",")
     assert (len(input_files) == len(read_sizes), "Read sizes options are not of the same lenght of input_files options")
     return kmers, mmers, input_files, read_sizes, output_path, methods, n_reads
 
@@ -133,10 +133,7 @@ def main():
         for mmer in mmers:
             for method in methods:
                 for idx, input_file in enumerate(input_files):
-                    try:
-                        n_read = n_reads[idx]
-                    except IndexError:
-                        n_read = None
+                    n_read = None if not n_reads else n_reads[idx]
                     try:
                         execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method, n_read)
                     except Exception as e:
