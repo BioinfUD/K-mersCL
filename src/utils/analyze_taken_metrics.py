@@ -20,12 +20,12 @@ def parse_arguments():
     parser.add_argument('--used_cores', dest="used_cores",
                         help="Number of cores used when taking the sar metrics")
     parser.add_argument('--date_of_metrics', dest="str_date",
-                        help="Date when the execution was done, this is usefule since sar output files does not contains the date, just the hour")
+                        help="Date when the execution was done, this is usefule since sar output files does not contains the date, just the hour", default="2017-08-15")
 
     args = parser.parse_args()
     input_path = args.input_path
     n_cores = int(args.used_cores)
-    str_date = int(args.str_date)
+    str_date = args.str_date
     return input_path, n_cores, str_date
 
 def process_cpu_metrics(input_file, n_cores, str_date):

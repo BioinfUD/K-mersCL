@@ -53,6 +53,7 @@ def execute_kmercl(params):
     # Sync
     params['output_path'] = "{output_path}/output_files".format(**params)
     command = "python2 -u getSuperK2_M.py --kmer {kmer} --mmer {mmer} --input_file {input_file} --read_size {read_size} --output_path {output_path}".format(**params)
+    print "Executing {}".format(command)
     if params['n_reads']:
         command += " --n_reads {}".format(params['n_reads'])
     command += " | ts %s, > {log_output_path}".format(**params)
@@ -84,7 +85,7 @@ def execute_sleep(seconds):
 def execute_metrics_summary(full_output_path):
     path = os.path.join(full_output_path, "metrics")
     sys.stdout.write("Mergin metrics in {}".format(path))
-    merge_metrics(path, TOTAL_CORES, "2017-07-23")
+    merge_metrics(path, TOTAL_CORES, "2017-08-15")
 
 def kill_processes(pids):
     sys.stdout.write("Killing metrics collection processes {}\n".format(pids))
