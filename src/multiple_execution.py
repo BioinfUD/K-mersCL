@@ -6,7 +6,7 @@ import sys
 from utils.analyze_taken_metrics import merge_metrics
 
 import config
-from config import MSPK_PARTITION_PATH, MSPK_THREADS, TOTAL_CORES
+from config import MSPK_PARTITION_PATH, THREADS, TOTAL_CORES, KMC_PATH
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -30,7 +30,7 @@ def parse_arguments():
     output_path = args.output_path
     methods = ["kmerscl"] if not args.methods else args.methods.split(",")
     n_reads = None if not args.n_reads else args.n_reads.split(",")
-    assert (len(input_files) == len(read_sizes), "Read sizes options are not of the same lenght of input_files options")
+    # assert (len(input_files) == len(read_sizes), "Read sizes options are not of the same lenght of input_files options")
     return kmers, mmers, input_files, read_sizes, output_path, methods, n_reads
 
 def execute_metrics_collection(full_output_path):
@@ -60,6 +60,25 @@ def execute_kmercl(params):
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
 
+def execute_kmercl_signature(params):
+    # Sync
+    params['output_path'] = "{output_path}/output_files".format(**params)
+    command = "python2 -u getSuperK2_M_signature.py --kmer {kmer} --mmer {mmer} --input_file {input_file} --read_size {read_size} --output_path {output_path}".format(**params)
+    print "Executing {}".format(command)
+    if params['n_reads']:
+        command += " --n_reads {}".format(params['n_reads'])
+    command += " | ts %s, > {log_output_path}".format(**params)
+    sys.stdout.write("Executing '{}' \n".format(command))
+    subprocess.call(command, shell=True)
+
+def execute_kmc(params):
+    params['working_dir'] = "{output_path}tmp".format(**params)
+    params['output_path'] = "{output_path}/output_files.res".format(**params)
+    params['n_cores'] = THREADS
+    command = KMC_PATH + " -k{kmer} -p{mmer} -t{n_cores} -fa {input_file} {output_path} {working_dir} | ts %s, > {log_output_path}".format(**params)
+    sys.stdout.write("Executing '{}' \n".format(command))
+    subprocess.call(command, shell=True)
+
 # We need to copy mspk since is not possible to configure the output path and handling cd and stuff will be harder
 def copyMSPK(params):
     print "Copying mspk to: {}".format(params['output_path'])
@@ -68,10 +87,9 @@ def copyMSPK(params):
     copyfile(os.path.join(MSPK_PARTITION_PATH, "Partition$MyThreadStep1.class"), copy_path +"Partition$MyThreadStep1.class")
     copyfile(os.path.join(MSPK_PARTITION_PATH, "guava-19.0.jar"), copy_path + "guava-19.0.jar")
 
-
 def execute_mspk(params):
     params['output_path'] = os.path.join(params['output_path'])
-    params['n_cores'] = MSPK_THREADS
+    params['n_cores'] = THREADS
     command = "cd {output_path} && java -cp guava-19.0.jar: Partition -in {input_file} -k {kmer} -L {read_size} -p {mmer} -t {n_cores} | ts %s, > {log_output_path}".format(**params)
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
@@ -100,6 +118,7 @@ def execute_assesment(kmer, mmer, input_file, read_size, output_path, method, n_
     full_output_path = os.path.join(params['output_path'], "{method}-k{kmer}-m{mmer}-r{read_size}-{input_file_name}/".format(**params))
     print full_output_path
     os.system('mkdir -p {}'.format(full_output_path))
+    os.system('mkdir -p {}/tmp'.format(full_output_path))
     # Rewrite for specific output
     params['output_path'] = full_output_path
     params['log_output_path'] = os.path.join(full_output_path, "metrics", "tool_log.csv")
@@ -119,6 +138,10 @@ def execute_assesment(kmer, mmer, input_file, read_size, output_path, method, n_
     execute_sleep(3)
     if method == "kmerscl":
         execute_kmercl(params)
+    if method == "kmerscl_signature":
+        execute_kmercl_signature(params)
+    if method == "kmc":
+        execute_kmc(params)
     if method == "mspk":
         execute_mspk(params)
     if method == "sleep":
