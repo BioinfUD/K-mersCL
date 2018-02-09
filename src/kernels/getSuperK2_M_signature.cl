@@ -15,16 +15,20 @@ __kernel void getSuperK_M(
    xl = get_local_id(0);
    yl = get_local_id(1);
 
-  __local uint RSK[180]; // Vector of a read and super k-mers (32 bits) , len = lenght of reads
+  __local uint RSK[180]; //  Vector to store reads, m-mers and superk-mers. This vector is overwritten in each stage, size: length of the read
 
-  __local uint RCMT[7]; // Position of minimizer in each tile, (nm-1)/(ts)   +  1, ts -> (nm-1)/lsd   + 1, nm=r-m-1, lsd=localSpaceSize/m
-  __local uint MT[7]; // max(nt1, nt2) , max(nt anterior , nt nuevo)
+  __local uint RCMT[7]; // Reverse complement of current m-mer of tile (32 bits), size: nt2
+  __local uint MT[7]; // Current m-mer of tile (32 bits), size: Greater between nt2 and nt3
   __local uint counter, mp, nmp, minimizer; // minimizer position, new minimizer  position, minimizer
 
    nmk = k - m + 1;
-   // Global to local
-   ts = get_local_size(0);
-   nt1 = (r-1)/ts + 1; // nt: Number of tiles or number of sub-reads per read
+  
+  // PROCESS: global2Local
+  // Reads in global memory to Read in local memory
+
+   
+   ts = get_local_size(0); ts: Tile size, work group size
+   nt1 = (r-1)/ts + 1; // nt1: Number of tiles for this process 
    if ((x<ts) && (x<r) && (y<nr)){
       for (int i=0; i<nt1; i++) { // coalesced
         p=ts*i+x;
@@ -36,30 +40,38 @@ __kernel void getSuperK_M(
     }
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    // FUNCTION: GetM-mers
-    // Read to decimal representation of m-mers
-    lsd = get_local_size(0) / m;
+   // PROCESS: getCm-mers
+   // Reads to decimal representation of Canonical M-mers
+   
+   
+    lsd = get_local_size(0) / m; lsd: Local space divisions
     nm = r - m + 1; // nm: Number of m-mers per read
-    ts = ((nm-1)/lsd) + 1; // ts: Tile size
-    nt2 = ((nm-1)/ts) + 1 ; // nt: Number of tiles or number of sub-reads per read
-    // a = (int) (pow(((double) 2, (double) (2*m)) - 1); // Mask
+    ts = ((nm-1)/lsd) + 1; // ts: Tile size for this process
+    nt2 = ((nm-1)/ts) + 1 ; // nt2: Number of tiles for this process
+    // a = (int) (pow(((double) 2, (double) (2*m)) - 1); // a:Mask (Sample: 63 for m = 4, to cancel all bits different to first 6) 
     a = 4095; // Mask   2**(2m-2)cc
 
+   // Parallel computing of the first m-mer of each tile
+   
     if ((x < m*nt2) && (y<nr)) {
       // Cómputo en pllo del primer m-mer de cada tile
-      idt = x/m;
-      start = ts*idt;
+      idt = x/m; // Tile id
+      start = ts*idt; // Position of the first base for each tile
       offset = x % m;
-      p = (start) + (offset);
-      MT[idt] = 0;
-      RCMT[idt] = 0;
+      p = (start) + (offset); // Position of the base corresponding a the thread
+      MT[idt] = 0; // RCMT Reset
+      RCMT[idt] = 0; // Each thread copies its base to b
       b = RSK[p];
-      atomic_or(&MT[idt], (b << (m-(x%m)-1)*2));
-      atomic_or(&RCMT[idt], (((~b) & 3) << (x%m)*2));
+      atomic_or(&MT[idt], (b << (m-(x%m)-1)*2)); // Calculating the first m-mer of each tile 
+      atomic_or(&RCMT[idt], (((~b) & 3) << (x%m)*2)); // Calculating the reverse complement of the first m-mer of each tile
     }
     barrier(CLK_LOCAL_MEM_FENCE);
 
     if ((x<nt2) && (y<nr)) {
+      // Finding the first canonical m-mer of each tile
+	   // The canonical m-mers of a read are saved in the same vector where the read was stored (RSK)
+      /* Each canonical m-mer is saved in the position where was its last base (This avoid the over-write of bases that Will be used by another tile) */
+       
       idt = x;
       start = ts*idt;
       if (MT[idt]<RCMT[idt]){
