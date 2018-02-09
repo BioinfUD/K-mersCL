@@ -6,7 +6,7 @@ This repository contains an implementation of a heterogenous parallel processing
 
 Implemented kernels
 --------------------------------
-* getSuperK_M: Obtains super k-mers based on minimizer.
-
+* getSuperK_M: Obtains super k-mers based on Canonical Minimizer.
+* getSuperK_Sig: Obtains super k-mers based on Signature.
 
 *Note:*  OpenCL 1.2 o superior is required
