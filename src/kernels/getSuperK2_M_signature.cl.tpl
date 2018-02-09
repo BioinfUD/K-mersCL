@@ -70,7 +70,8 @@ __kernel void getSuperK_M(
 
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    // Checking for signature
+    // Checking for Signature
+    
     if ((x < nt2) && (y<nr)) {
       idt = x;
       start = ts*idt;
@@ -122,6 +123,7 @@ __kernel void getSuperK_M(
     barrier(CLK_LOCAL_MEM_FENCE);
 
     // Serial computation of the m-mers remaining of each tile
+    
     if ((x<nt2) && (y<nr))	{
        idt = x; // Tile id
        start = ts*idt; // Position of the first base for each tile
