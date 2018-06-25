@@ -239,7 +239,7 @@ __kernel void getSuperK_M(
       start_zone = mp;
       if (p<start_zone) {
         p = p + nmk;
-        if ( p < (nm -1)) {
+        if ( p < (nm)) {
           b = RSK[p+m-1];
           if (b < minimizer) {
             atomic_min(&nmp, p);
