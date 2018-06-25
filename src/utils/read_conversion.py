@@ -51,7 +51,7 @@ def file_to_matrix(filename="/tmp/outfile.txt", r=180, n_reads=None):
     reads_matrix[0] = map(base_to_int,list(str(second_line)))
     counter = 1
     in_file.readline()  # Skip id line
-    line = in_file.readline()  # Skip id line
+    line = in_file.readline().strip()
     while line:
         reads_matrix[counter] = map(base_to_int, list(str(line.strip())))
         if counter % 100000 == 0:
