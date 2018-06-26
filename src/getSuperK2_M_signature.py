@@ -28,7 +28,7 @@ def parse_arguments():
     read_size = args.read_size
     output_path = args.output_path
     n_reads = args.n_reads
-    return int(kmer), int(mmer), input_file, int(read_size), int(n_reads), output_path
+    return int(kmer), int(mmer), input_file, int(read_size), n_reads, output_path
 
 """
 def extract_superkmers(minimizer_matrix, input_file, output_path, m=4):

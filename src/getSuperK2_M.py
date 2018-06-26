@@ -27,8 +27,8 @@ def parse_arguments():
     input_file = args.input_file
     read_size = args.read_size
     output_path = args.output_path
-    n_reads = args.n_reads
-    return int(kmer), int(mmer), input_file, int(read_size), int(n_reads), output_path
+    n_reads = args.n_reads if args.n_reads else None
+    return int(kmer), int(mmer), input_file, int(read_size), n_reads, output_path
 
 """
 def extract_superkmers(minimizer_matrix, input_file, output_path, m=4):
@@ -95,7 +95,7 @@ def getSuperK_M(kmer, mmer, input_file, read_size, n_reads, output_path):
     t1 = time.time()
     getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, nr, read_size, kmer, mmer)
     cola.finish()
-    sys.stdout.write("Kernel execution took {}, copying data from device to host memory\n".format(time.time() - t1))
+    sys.stdout.write("Kernel execution took {}, copying data from device to host memory \n".format(time.time() - t1))
     cl.enqueue_copy(cola, h_counters, d_counters)
     cl.enqueue_copy(cola, h_R2M_G, d_R2M_G)
     # Cut the output matrix based on counters

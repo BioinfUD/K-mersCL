@@ -45,7 +45,11 @@ def file_to_matrix(filename="/tmp/outfile.txt", r=180, n_reads=None):
     second_line = in_file.readline().strip()
     avg_record_bytes = len(str(first_line)) + len(str(second_line)) + 2
     input_file_size = os.path.getsize(filename)
-    estimated_reads = n_reads if n_reads else (input_file_size/avg_record_bytes)
+    if n_reads:
+        estimated_reads = int(n_reads)
+    else:
+        sys.stdout.write("Number of reads not specified , estimating the number\n")
+        estimated_reads = input_file_size/avg_record_bytes
     sys.stdout.write("Estimated/specified number of reads: {}\n".format(estimated_reads))
     reads_matrix = ndarray(shape=(estimated_reads, r), dtype=np.uint32)
     reads_matrix[0] = map(base_to_int,list(str(second_line)))
