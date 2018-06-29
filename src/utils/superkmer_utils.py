@@ -13,19 +13,23 @@ def cut_minimizer_matrix(minimizer_matrix, counter_vector):
     return cutted_matrix
 
 
-def extract_superkmers(minimizer_matrix, input_file_path, output_path, m=4):
+def extract_superkmers(minimizer_matrix, input_file_path, output_path, k, m=4):
     parser = SeqIO.parse(input_file_path, "fasta")
     output_files = {}
     n_superkmers = 0
+    shift1 = 32 - (2*m)
+    mask1 = ((2**(m*2)) - 1) << shift1;
+    mask2 = ((2**(25-(2*m))) - 1) << 7;
+
     for i in range(0, 4**m):
         output_files[str(i)] = BufferedWriter(FileIO(output_path+"/"+str(i), "w"), buffer_size=5000000)
     for row in minimizer_matrix:
         record = parser.next()
         for v in row:
-            minimizer = (v & 0b11111111111111000000000000000000) >> 18
-            pos = (v & 0b00000000000000111111111100000000) >> 8
-            size = v & 0b00000000000000000000000011111111
-            end =  pos + size
+            minimizer = (v & mask1) >> shift1;
+            pos = (v & mask2) >> 7
+            size = (v & 0b00000000000000000000000011111111) + k
+            end = pos + size
             #print "Min {},  pos {}, size {}, end{}".format(minimizer, pos, size, end)
             minimizer_str = str(minimizer) 
             output_files[minimizer_str].write(str(record.seq)[pos:end]+"\n")

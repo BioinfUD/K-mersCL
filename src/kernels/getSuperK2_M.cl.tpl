@@ -11,6 +11,12 @@ __kernel void getSuperK_M(
    )
 {
    uint x, y, yl, xl, p, start, offset, nmk, nm, min, a, b, c, d, idt, ts, nt, lsd, nkr, tmp, ls, start_zone, start_superk, nt1, nt2, nt3, nt4 = 0;
+
+   // Used for the CISK structure building
+   uint shift1 = SHIFT1;
+   uint mask1 = MASK1;
+   uint mask2 = MASK2;
+
    bool flag;
 
    x = get_global_id(0);
@@ -195,8 +201,8 @@ __kernel void getSuperK_M(
      * there ends a super k-mer. The code below is to store the representation of the super k-mer in the vector RSK,
      * additionally counter is incremented and star_superk and minimizer are set. */
     if ( (x==0) && flag ) {
-      a = (start_zone + k - 1 - start_superk) & 0x000000FF;
-      RSK[counter] = ((minimizer<<18) & 0xFFFC0000) | ((start_superk<<8) & 0x0003FF00) | a;
+      a = (start_zone + k - 1 - start_superk -k ) & 0x000000EF;
+      RSK[counter] = ((minimizer<<shift1) & mask1) | ((start_superk<<7) & mask2) | a;
       counter++;
       start_superk  = start_zone;
       minimizer = 0xFFFFFFFF;
@@ -254,8 +260,8 @@ __kernel void getSuperK_M(
      * super k-mer in the vector RSK, additionally counter is incremented and star_superk, minimizer, mp and nmp are set. */
 
     if ((x==0) && (flag==false) && (nmp != 0xFFFFFFFF)) {
-      a = (nmp - start_superk + m - 1) & 0x000000FF;
-      RSK[counter] = ((minimizer <<  18) & 0xFFFC0000) | ((start_superk << 8) & 0x0003FF00) | a;
+      a = (nmp - start_superk + m - 1 - k) & 0x000000EF;
+      RSK[counter] = ((minimizer<<shift1) & mask1) | ((start_superk<<7) & mask2) | a;
       mp = nmp;
       minimizer = RSK[mp+m-1];
       counter++;
@@ -270,8 +276,8 @@ __kernel void getSuperK_M(
   /* When each read is fully evaluated, it is necessary to store the representation of last super k-mer in the vector RSK */
 
   if (x==0) {
-    a = (nm - start_superk + m - 1) & 0x000000FF;
-    RSK[counter] = ((minimizer << 18) & 0xFFFC0000) | ((start_superk<<8) & 0x0003FF00) | a;
+    a = (nm - start_superk + m - 1 -k) & 0x000000EF;
+    RSK[counter] = ((minimizer<<shift1) & mask1) | ((start_superk<<7) & mask2) | a;
     counter ++;
   }
 
