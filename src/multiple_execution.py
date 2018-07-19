@@ -6,7 +6,7 @@ import sys
 from utils.analyze_taken_metrics import merge_metrics
 
 import config
-from config import MSPK_PARTITION_PATH, THREADS, TOTAL_CORES, KMC_PATH
+from config import MSPK_PARTITION_PATH, THREADS, TOTAL_CORES, KMC_PATH, CLEAR_MEM_SCRIPT_PATH
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -67,7 +67,7 @@ def execute_kmercl_signature(params):
     print "Executing {}".format(command)
     if params['n_reads']:
         command += " --n_reads {}".format(params['n_reads'])
-    command += " | ts %s, > {log_output_path}".format(**params)
+    command += " | ts %s, | tee {log_output_path}".format(**params)
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
 
@@ -75,7 +75,7 @@ def execute_kmc(params):
     params['working_dir'] = "{output_path}tmp".format(**params)
     params['output_path'] = "{output_path}/output_files.res".format(**params)
     params['n_cores'] = THREADS
-    command = KMC_PATH + " -k{kmer} -p{mmer} -t{n_cores} -fa {input_file} {output_path} {working_dir} | ts %s, > {log_output_path}".format(**params)
+    command = KMC_PATH + " -k{kmer} -p{mmer} -t{n_cores} -fa {input_file} {output_path} {working_dir} | ts %s, | tee {log_output_path}".format(**params)
     sys.stdout.write("Executing '{}' \n".format(command))
     subprocess.call(command, shell=True)
 
@@ -103,14 +103,19 @@ def execute_sleep(seconds):
 def execute_metrics_summary(full_output_path):
     path = os.path.join(full_output_path, "metrics")
     sys.stdout.write("Mergin metrics in {}".format(path))
-    merge_metrics(path, TOTAL_CORES, "2017-08-15")
+    merge_metrics(path, TOTAL_CORES, "2017-12-09")
 
 def kill_processes(pids):
     sys.stdout.write("Killing metrics collection processes {}\n".format(pids))
     subprocess.call("killall -9 sar", shell=True)
     subprocess.call("killall -9 sar", shell=True)
     subprocess.call("killall -9 nvidia-smi", shell=True)
-    subprocess.call("sudo sh /tmp/clear_mem.sh", shell=True)
+    subprocess.call("sudo sh {}".format(CLEAR_MEM_SCRIPT_PATH), shell=True)
+
+
+def delete_output_files(output_path):
+    os.system('rm -rf {}/output*'.format(output_path))
+    os.system('rm -rf {}/Node*'.format(output_path))
 
 def execute_assesment(kmer, mmer, input_file, read_size, output_path, method, n_reads):
     params = {'mmer': mmer, 'input_file_name': input_file.split("/")[-1], 'kmer': kmer, 'output_path': output_path,
@@ -150,6 +155,8 @@ def execute_assesment(kmer, mmer, input_file, read_size, output_path, method, n_
     execute_sleep(3)
     kill_processes([process_cpu.pid, process_memio.pid, process_nvidia.pid])
     execute_metrics_summary(full_output_path)
+    # To avoid the file system to get full
+    delete_output_files(params['output_path'])
 
 def main():
     kmers, mmers, input_files, read_sizes, output_path, methods, n_reads = parse_arguments()
@@ -160,6 +167,7 @@ def main():
                     n_read = None if not n_reads else n_reads[idx]
                     try:
                         execute_assesment(kmer, mmer, input_file, read_sizes[idx], output_path, method, n_read)
+
                     except Exception as e:
                          sys.stdout.write("Exception {} generated with parameters {} \n".format(str(e), [kmer, mmer, input_file, read_sizes[idx], output_path, method]))
 
