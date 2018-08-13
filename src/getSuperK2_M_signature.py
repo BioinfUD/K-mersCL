@@ -97,10 +97,13 @@ def getSuperK_M(kmer, mmer, input_file, read_size, n_reads, output_path):
     codigo_kernel = customize_kernel_template(X, kmer, mmer, read_size, codigo_kernel)
     programa = cl.Program(contexto, codigo_kernel).build()
     getSuperK_M = programa.getSuperK_M
-    getSuperK_M.set_scalar_arg_dtypes([None, None, np.uint32, np.uint32, np.uint32,np.uint32])
+    getSuperK_M.set_scalar_arg_dtypes([None, None, None, np.uint32, np.uint32, np.uint32,np.uint32])
     # Copy data from host to device
+    t1 = time.time()
     sys.stdout.write("Copying data from host to device memory \n")
-    d_R2M_G = cl.Buffer(contexto, cl.mem_flags.COPY_HOST_PTR, hostbuf=h_R2M_G)
+    d_R2M_G = cl.Buffer(contexto, cl.mem_flags.COPY_HOST_PTR | cl.mem_flags.READ_ONLY, hostbuf=h_R2M_G)
+    sys.stdout.write("Copying data took {} seconds \n".format(time.time() - t1))
+
     # Kernel parameters
     sys.stdout.write("Ejecutando X hilos, X: {}\n".format(X))
     rango_global = (X, nr)
@@ -111,17 +114,21 @@ def getSuperK_M(kmer, mmer, input_file, read_size, n_reads, output_path):
     d_counters = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY, h_counters.nbytes)
     # Execution
     t1 = time.time()
-    getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, nr, read_size, kmer, mmer)
+    h_cisk = np.ndarray(shape=(nr, (read_size - kmer + 1)/2), dtype=np.uint32)
+    d_cisk = cl.Buffer(contexto, cl.mem_flags.WRITE_ONLY | cl.mem_flags.HOST_READ_ONLY , h_cisk.nbytes)
+    getSuperK_M(cola, rango_global, rango_local, d_R2M_G, d_counters, d_cisk, nr, read_size, kmer, mmer)
     cola.finish()
     sys.stdout.write("Kernel execution took {}, copying data from device to host memory\n".format(time.time() - t1))
+    t1 = time.time()
     cl.enqueue_copy(cola, h_counters, d_counters)
-    cl.enqueue_copy(cola, h_R2M_G, d_R2M_G)
+    cl.enqueue_copy(cola, h_cisk, d_cisk)
+    sys.stdout.write("Copying data took {} seconds \n".format(time.time() - t1))
     # Cut the output matrix based on counters
     sys.stdout.write("Copy Done, cutting the matrix based on available superkmers\n")
-    print h_R2M_G
+    print h_cisk
     print h_counters
-    minimizer_matrix = cut_minimizer_matrix(h_R2M_G, h_counters)
-    del(h_R2M_G)
+    minimizer_matrix = cut_minimizer_matrix(h_cisk, h_counters)
+    del(h_cisk)
     sys.stdout.write("Writing superkmers to disk\n")
     extract_superkmers(minimizer_matrix, input_file, output_path, kmer, m=mmer)
     sys.stdout.write("Done execution\n")

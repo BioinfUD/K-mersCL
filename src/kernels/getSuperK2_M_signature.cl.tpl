@@ -2,8 +2,9 @@
 // Variables inside a kernel not declared with an address space qualifier are considered Private
 
 __kernel void getSuperK_M(
-   __global uint* RSK_G, // Vector of reads and super k-mers (32 bits)
+   __global uchar* RSK_G, // Vector of reads and super k-mers (32 bits)
    __global uint* counters, // Matrix of temporal output
+   __global uint* CISK, // CISK
    const unsigned int nr, // Number of reads
    const unsigned int r, // Read size
    const unsigned int k, // K-mer size
@@ -33,6 +34,7 @@ __kernel void getSuperK_M(
    __local uint minimizer;  // Current canonical minimizer or signature
 
    nmk = k - m + 1;  //Number of m-mers per k-mers
+   nkr = (r - k + 1)/2; // Number of kmers per read
 
    // PROCESS: Global to local
    // Reads in global memory to Read in local memory
@@ -77,7 +79,7 @@ __kernel void getSuperK_M(
     barrier(CLK_LOCAL_MEM_FENCE);
 
     // Checking for Signature
-    
+
     if ((x < nt2) && (y<nr)) {
       idt = x;
       start = ts*idt;
@@ -129,7 +131,7 @@ __kernel void getSuperK_M(
     barrier(CLK_LOCAL_MEM_FENCE);
 
     // Serial computation of the m-mers remaining of each tile
-    
+
     if ((x<nt2) && (y<nr))	{
        idt = x; // Tile id
        start = ts*idt; // Position of the first base for each tile
@@ -143,7 +145,7 @@ __kernel void getSuperK_M(
            b = RSK[start+m+z]; // Copy to b the last base of the m-mer that will be calculated (current m-mer)
            c = ((c & a) << 2)|b; // Calculating the current m-mer from the previous m-mer and the new base read (b)
            d = ((d>>2) & (a)) | (((~b) & 3)<<((m-1)*2)); // Calculating the reverse complement of the current m-mer from the reverse complement of the previous m-mer and the new base read (b)
-            
+
            // Checking for Signature
 
            f = false;
@@ -191,8 +193,8 @@ __kernel void getSuperK_M(
     }
 
     barrier(CLK_LOCAL_MEM_FENCE);
-    
-    
+
+
    // PROCESS: getSuperks
    // Canonical m-mers to minimizers
 
@@ -261,11 +263,11 @@ __kernel void getSuperK_M(
   barrier(CLK_LOCAL_MEM_FENCE);
 
   // Processing the remaining k-mers
-     while ((start_zone+nmk-1)<(nm-1)) {
-     
+     while ((x<nmk) && (start_zone+nmk-1)<(nm-1)) {
+
     flag = false; // Flag to indicate if the position of the current minimizer is equal to start_zone (Start of the last k-mer evaluated)
     // If the position of the current minimizer is equal to start_zone, the flag is set to true and start_zone is incremented by one
-   
+
    if ((x<nmk) && (mp == start_zone)){
       flag = true;
       start_zone = start_zone + 1;
@@ -357,7 +359,7 @@ __kernel void getSuperK_M(
       {
         break;
       }
-      RSK_G[y*r+p] = RSK[p];
+      CISK[y*nkr+p] = RSK[p];
     }
   }
 
