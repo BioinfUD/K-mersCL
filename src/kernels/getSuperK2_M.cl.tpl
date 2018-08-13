@@ -2,8 +2,9 @@
 // Variables inside a kernel not declared with an address space qualifier are considered Private
 
 __kernel void getSuperK_M(
-   __global uint* RSK_G, // Vector of reads and super k-mers (32 bits)
+   __global uchar* RSK_G, // Vector of reads and super k-mers (8 bits)
    __global uint* counters, // Matrix of temporal output
+   __global uint* CISK, // CISK data structure for output
    const unsigned int nr, // Number of reads
    const unsigned int r, // Read size
    const unsigned int k, // K-mer size
@@ -33,6 +34,7 @@ __kernel void getSuperK_M(
    __local uint minimizer;  // Current canonical minimizer or signature
 
    nmk = k - m + 1;  //Number of m-mers per k-mers
+   nkr = (r - k + 1)/2;
 
    // PROCESS: Global to local
    // Reads in global memory to Read in local memory
@@ -185,7 +187,7 @@ __kernel void getSuperK_M(
   barrier(CLK_LOCAL_MEM_FENCE);
 
   // Processing the remaining k-mers
-  while ((start_zone+nmk-1)<(nm-1)) {
+  while ((x<nmk) && (start_zone+nmk-1)<(nm-1)) {
     flag = false; // Flag to indicate if the position of the current minimizer is equal to start_zone (Start of the last k-mer evaluated)
     // If the position of the current minimizer is equal to start_zone, the flag is set to true and start_zone is incremented by one
     if ((x<nmk) && (mp == start_zone)){
@@ -295,7 +297,7 @@ __kernel void getSuperK_M(
       {
         break;
       }
-      RSK_G[y*r+p] = RSK[p];
+      CISK[y*nkr+p]  = RSK[p];
     }
   }
 
