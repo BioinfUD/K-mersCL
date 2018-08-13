@@ -52,16 +52,23 @@ def file_to_matrix(filename="/tmp/outfile.txt", r=180, n_reads=None):
         estimated_reads = input_file_size/avg_record_bytes
     sys.stdout.write("Estimated/specified number of reads: {}\n".format(estimated_reads))
     reads_matrix = ndarray(shape=(estimated_reads, r), dtype=np.uint8)
-    reads_matrix[0] = map(base_to_int,list(str(second_line)))
-    counter = 1
-    in_file.readline()  # Skip id line
-    line = in_file.readline().strip()
-    while line:
-        reads_matrix[counter] = map(base_to_int, list(str(line.strip())))
+    # reads_matrix[0] = map(base_to_int, list(str(second_line)))
+    skip_line = True
+    counter = 0
+    # lines = in_file.read(5000000).split("\n")
+    # in_file.readline()  # Skip id line
+    # line = in_file.readline().strip()
+    for line in list(in_file):
+        if skip_line:
+            skip_line = False
+            continue
+        else:
+            reads_matrix[counter] = map(base_to_int, list(str(line.strip())))
+            counter += 1
+            skip_line = True
+
         if counter % 100000 == 0:
             sys.stdout.write("{} reads has been loaded\n".format(counter))
-        in_file.readline()  # Skip id line
-        line = in_file.readline()
-        counter += 1
+
     sys.stdout.write("{} reads has been loaded, initial estimate was {} reads\n".format(counter, estimated_reads))
     return reads_matrix[0:counter]
