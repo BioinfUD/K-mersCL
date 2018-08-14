@@ -8,7 +8,7 @@ def extract_nvidia_max_memory(merged_file):
     return np.nanmax(merged_file['GPU'])
 
 def extract_anytool_max_memory(merged_file):
-    return np.nanmax(merged_file['MEM'])/1000.0
+    return (np.nanmax(merged_file['MEM']) - np.nanmin(merged_file['MEM']))/1000.0
 
 
 def extract_kmc_time(log_file):
