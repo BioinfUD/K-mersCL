@@ -129,6 +129,12 @@ def merge_metrics(input_path, n_cores, str_date):
     except:
         series_log = pd.Series()
 
+    series_gpu = series_gpu.groupby(series_gpu.index).last()
+    series_mem = series_mem.groupby(series_mem.index).last()
+    series_read = series_read.groupby(series_read.index).last()
+    series_cpu = series_cpu.groupby(series_cpu.index).last()
+    series_written = series_written.groupby(series_written.index).last()
+    
     # Join series
     df = pd.concat([series_cpu, series_mem, series_read, series_written, series_gpu, series_log], axis=1)
     df.columns =["CPU", "MEM", "READ", "WRITE", "GPU", "LOG"]
