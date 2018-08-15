@@ -10,17 +10,17 @@ from utils.superkmer_utils import cut_minimizer_matrix, extract_superkmers
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Obtains superkmers (Based on substrings) from a input file given a mmer, kmer sizes. Does the computing on GPU")
+        description="Obtains superkmers (Based on signatures) from a input file given a mmer, kmer sizes. Does the computing on GPU")
     parser.add_argument('--kmer', dest="kmer", default="31",
-                        help="Kmer size to perform performance assesment (Comma separated). Default value: 31")
+                        help="Kmer size to perform performance assesment. Default value: 31")
     parser.add_argument('--mmer', dest="mmer", default="4",
-                        help="Mmer size to perform performance assesment (Comma separated)")
-    parser.add_argument('--input_file', dest="input_file", help="List of paths to evaluate files (Comma separated)")
+                        help="Mmer size to perform performance assesment")
+    parser.add_argument('--input_file', dest="input_file", help="List of paths to evaluate files")
     parser.add_argument('--read_size', dest="read_size",
                         help="Read size of each file specified on --input_files option")
     parser.add_argument('--output_path', dest="output_path", default="output_superkmers",
                         help="Folder where the stats and output will be stored")
-    parser.add_argument('--n_reads', dest="n_reads", default=None, help="Number of reads in each file (Comma separated values). If not specified this will be estimated")
+    parser.add_argument('--n_reads', dest="n_reads", default=None, help="Number of reads in each file. If not specified this will be estimated")
     args = parser.parse_args()
     kmer = args.kmer
     mmer = args.mmer
@@ -28,23 +28,10 @@ def parse_arguments():
     read_size = args.read_size
     output_path = args.output_path
     n_reads = args.n_reads
+    if any(x is None for x in [kmer, mmer, input_file, read_size, output_path]):
+        parser.print_help()
+        sys.exit(0)
     return int(kmer), int(mmer), input_file, int(read_size), n_reads, output_path
-
-"""
-def extract_superkmers(minimizer_matrix, input_file, output_path, m=4):
-    n_superkmers = 0
-    for row in minimizer_matrix:
-        print "superkmers: {}".format(str(row))
-        for v in row:
-            minimizer = (v & 0b11111111111111000000000000000000) >> 18
-            pos = (v & 0b00000000000000111111111100000000) >> 8
-            size = v & 0b00000000000000000000000011111111
-            end = pos + size
-            minimizer_str = str(minimizer)
-            print "Valor {} Min {},  ini {}, size {}, end{}".format(v, minimizer, pos, size, end)
-            n_superkmers+=1
-    return n_superkmers
-"""
 
 def customize_kernel_template(X, k, m, r, kernel_template):
     if (k <= 36):
@@ -73,21 +60,11 @@ def customize_kernel_template(X, k, m, r, kernel_template):
     return kernel_template
 
 def getSuperK_M(kmer, mmer, input_file, read_size, n_reads, output_path):
-    # Kernel parameters
-    #sys.stdout.write("Loading sequences from file {}\n".format(input_file))
+
     h_R2M_G = file_to_matrix(input_file, int(read_size), n_reads)
-    # Extreme case 0,0,0,1,3,2,3
-    """
-    SR = [
-         [1,3,3,0,0,1,1,3,2,3,2,2,3,0,3,1,1,3,2,2,1,1,0,2,2,0,3,0,1,2,1,3,2,2,1,2,2,1,2,3,2,1,1,3,0,0,3,0,1,0,3,2,1,0,0,2,3,1,2,0,2,1,2,0,0,3,2,2,0,3,3,0,0,2,0,2,1,3,3,2,1,3,1,3,3,0,3,2,0,0,2,3,3,0,2,1,2,2,1,2,2,0,1,2,2,2,3,2,0,2,3,0,0,1,0,1,2,3,2,2,2,3,0,0,1,1,3,2,1,1,1,0,3,0,0,2,0,1,3,2,2,2,0,3,0,0,1,3,1,1,2,2,2,0,0,0,1,1,2,2,2,2,1,3,0,0,3,0,1,1,2,2,0,3,0,0,1,0,0,0],
-        ]
-    h_R2M_G =np.ndarray((len(SR), len(SR[0]))).astype(np.uint32)
-    h_R2M_G[:] = SR
-    """
     nr = h_R2M_G.shape[0]
     nmk = kmer - mmer + 1
     X = nmk
-    # X = 64 if kmer<64 else nmk
     # OpenCL things
     contexto = cl.create_some_context()
     cola = cl.CommandQueue(contexto)

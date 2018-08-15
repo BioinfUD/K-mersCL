@@ -23,6 +23,9 @@ def parse_arguments():
     parser.add_argument('--methods', dest="methods", default="kmerscl", help="Which method will be used to process reads (mspk or kmerscl), (comma separated for multiple)")
     parser.add_argument('--n_reads', dest="n_reads", default=None, help="Number of reads in each file (Comma separated values). If not specified this will be estimated")
     args = parser.parse_args()
+    if any(x is None for x in [args.kmers, args.mmers, args.input_files, args.read_sizes, args.output_path, args.methods]):
+        parser.print_help()
+        sys.exit(0)
     kmers = args.kmers.split(",")
     mmers = args.mmers.split(",")
     input_files = args.input_files.split(",")
@@ -30,7 +33,6 @@ def parse_arguments():
     output_path = args.output_path
     methods = ["kmerscl"] if not args.methods else args.methods.split(",")
     n_reads = None if not args.n_reads else args.n_reads.split(",")
-    # assert (len(input_files) == len(read_sizes), "Read sizes options are not of the same lenght of input_files options")
     return kmers, mmers, input_files, read_sizes, output_path, methods, n_reads
 
 def execute_metrics_collection(full_output_path):
