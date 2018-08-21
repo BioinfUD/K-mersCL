@@ -69,7 +69,6 @@ def getSuperK_M(kmer, mmer, input_file, read_size, n_reads, output_path):
     contexto = cl.create_some_context()
     cola = cl.CommandQueue(contexto)
     kernel = "kernels/getSuperK2_M_signature.cl.tpl"
-    print kernel
     codigo_kernel = open(kernel).read()
     codigo_kernel = customize_kernel_template(X, kmer, mmer, read_size, codigo_kernel)
     programa = cl.Program(contexto, codigo_kernel).build()
@@ -102,8 +101,6 @@ def getSuperK_M(kmer, mmer, input_file, read_size, n_reads, output_path):
     sys.stdout.write("Copying data took {} seconds \n".format(time.time() - t1))
     # Cut the output matrix based on counters
     sys.stdout.write("Copy Done, cutting the matrix based on available superkmers\n")
-    print h_cisk
-    print h_counters
     minimizer_matrix = cut_minimizer_matrix(h_cisk, h_counters)
     del(h_cisk)
     sys.stdout.write("Writing superkmers to disk\n")
