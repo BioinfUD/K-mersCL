@@ -36,5 +36,7 @@ https://drive.google.com/drive/folders/13rq3fmRr8g3AQXx7ZgSG-9iNq-hbQRoD?usp=sha
 *Note:* `PYOPENCL_CTX='0:0'` was used to avoid pyopencl to ask for the GPU to be used.
 
 ### Modifications to reference tools
+
 MSPKmerCounter: https://github.com/BioinfUD/MSPK_with_timing/blob/master/Partition.java#L129-L208
+
 KMC2: https://github.com/BioinfUD/KMC_withtiming/blob/master/kmer_counter/splitter.h#L717-L812
