@@ -31,6 +31,6 @@ Configure paths to tools like MSPK, and KMC in `config.py` file.
 https://drive.google.com/drive/folders/13rq3fmRr8g3AQXx7ZgSG-9iNq-hbQRoD?usp=sharing
 
 ### Used command :
-`PYOPENCL_CTX='0:0' python multiple_execution.py --kmers 51,81 --mmers 5,7 --read_sizes 180,300,180,300 --input_files /home/nvera/benchmark/data/SRR768269_3m_180.fasta,/home/nvera/benchmark/data/SRR768269_3m_300.fasta,/home/nvera/benchmark/data/SRR768269_9m_180.fasta,/home/nvera/benchmark/data/SRR768269_9m_300.fasta --output_path $PWD/output --method kmerscl_signature,kmc,mspk,kmerscl --n_reads 3000000,3000000,9000000,9000000`
+`PYOPENCL_CTX='0:0' python multiple_execution.py --kmers 51,81 --mmers 5,7 --read_sizes 180,300,180,300 --input_files /home/nvera/benchmark/data/SRR768269_1.5m_180.fasta,/home/nvera/benchmark/data/SRR768269_1.5m_300.fasta,/home/nvera/benchmark/data/SRR768269_9m_180.fasta,/home/nvera/benchmark/data/SRR768269_9m_300.fasta --output_path $PWD/output --method kmerscl_signature,kmc,mspk,kmerscl --n_reads 1500000,1500000,9000000,9000000`
 
 *Note:* `PYOPENCL_CTX='0:0'` was used to avoid pyopencl to ask for the GPU to be used.
